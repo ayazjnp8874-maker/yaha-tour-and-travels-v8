@@ -1,1 +1,16 @@
+name: YAHA V8 Check
 
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Verify workflow
+        run: echo "YAHA TOUR AND TRAVELS V8 workflow is working"
