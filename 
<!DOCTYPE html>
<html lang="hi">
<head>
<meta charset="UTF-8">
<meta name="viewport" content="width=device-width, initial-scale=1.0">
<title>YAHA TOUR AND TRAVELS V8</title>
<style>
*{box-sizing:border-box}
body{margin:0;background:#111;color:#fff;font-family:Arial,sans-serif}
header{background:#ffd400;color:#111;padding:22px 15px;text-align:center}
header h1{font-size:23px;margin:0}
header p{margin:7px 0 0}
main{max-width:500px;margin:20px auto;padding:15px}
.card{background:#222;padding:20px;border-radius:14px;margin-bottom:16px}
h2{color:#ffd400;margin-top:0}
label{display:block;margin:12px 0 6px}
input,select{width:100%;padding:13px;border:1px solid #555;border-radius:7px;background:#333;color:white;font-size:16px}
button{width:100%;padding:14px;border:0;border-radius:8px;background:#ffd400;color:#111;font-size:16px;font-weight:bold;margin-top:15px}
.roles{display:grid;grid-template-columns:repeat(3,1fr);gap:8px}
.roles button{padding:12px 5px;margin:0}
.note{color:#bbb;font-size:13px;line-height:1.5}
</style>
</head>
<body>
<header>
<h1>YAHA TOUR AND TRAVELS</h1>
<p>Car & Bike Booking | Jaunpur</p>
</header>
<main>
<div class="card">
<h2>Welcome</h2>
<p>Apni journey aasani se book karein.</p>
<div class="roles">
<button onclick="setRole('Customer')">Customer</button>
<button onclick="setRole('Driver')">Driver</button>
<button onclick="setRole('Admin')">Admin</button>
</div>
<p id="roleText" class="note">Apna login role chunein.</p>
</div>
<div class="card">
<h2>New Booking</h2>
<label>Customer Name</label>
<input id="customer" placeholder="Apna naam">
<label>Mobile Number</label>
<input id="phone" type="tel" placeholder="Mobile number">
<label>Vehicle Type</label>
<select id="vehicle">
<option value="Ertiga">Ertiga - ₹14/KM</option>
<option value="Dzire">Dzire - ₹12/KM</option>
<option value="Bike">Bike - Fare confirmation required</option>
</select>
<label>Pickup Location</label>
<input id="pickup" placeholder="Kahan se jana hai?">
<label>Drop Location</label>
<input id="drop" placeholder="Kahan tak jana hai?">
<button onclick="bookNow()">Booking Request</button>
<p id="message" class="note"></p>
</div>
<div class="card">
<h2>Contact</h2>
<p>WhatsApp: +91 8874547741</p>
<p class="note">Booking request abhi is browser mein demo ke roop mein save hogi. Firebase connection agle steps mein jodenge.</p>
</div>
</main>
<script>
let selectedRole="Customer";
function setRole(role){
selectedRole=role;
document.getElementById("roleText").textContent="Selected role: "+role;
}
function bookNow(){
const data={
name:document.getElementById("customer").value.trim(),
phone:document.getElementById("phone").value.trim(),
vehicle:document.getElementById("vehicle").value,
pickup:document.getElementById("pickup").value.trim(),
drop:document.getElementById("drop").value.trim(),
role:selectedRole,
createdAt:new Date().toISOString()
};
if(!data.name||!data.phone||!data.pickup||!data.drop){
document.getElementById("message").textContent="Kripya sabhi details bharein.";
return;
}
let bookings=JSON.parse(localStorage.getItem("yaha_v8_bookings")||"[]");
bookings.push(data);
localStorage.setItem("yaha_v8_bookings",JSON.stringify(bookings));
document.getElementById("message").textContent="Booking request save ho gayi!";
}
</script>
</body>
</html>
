@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YAHA TOUR AND TRAVELS V8</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#111;color:#fff;font-family:Arial,sans-serif}
+header{background:#ffd400;color:#111;padding:22px 15px;text-align:center}
+header h1{font-size:23px;margin:0}
+header p{margin:7px 0 0}
+main{max-width:500px;margin:20px auto;padding:15px}
+.card{background:#222;padding:20px;border-radius:14px;margin-bottom:16px}
+h2{color:#ffd400;margin-top:0}
+label{display:block;margin:12px 0 6px}
+input,select{width:100%;padding:13px;border:1px solid #555;border-radius:7px;background:#333;color:white;font-size:16px}
+button{width:100%;padding:14px;border:0;border-radius:8px;background:#ffd400;color:#111;font-size:16px;font-weight:bold;margin-top:15px}
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.roles button{padding:12px 5px;margin:0}
+.note{color:#bbb;font-size:13px;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+<h1>YAHA TOUR AND TRAVELS</h1>
+<p>Car & Bike Booking | Jaunpur</p>
+</header>
+<main>
+<div class="card">
+<h2>Welcome</h2>
+<p>Apni journey aasani se book karein.</p>
+<div class="roles">
+<button onclick="setRole('Customer')">Customer</button>
+<button onclick="setRole('Driver')">Driver</button>
+<button onclick="setRole('Admin')">Admin</button>
+</div>
+<p id="roleText" class="note">Apna login role chunein.</p>
+</div>
+<div class="card">
+<h2>New Booking</h2>
+<label>Customer Name</label>
+<input id="customer" placeholder="Apna naam">
+<label>Mobile Number</label>
+<input id="phone" type="tel" placeholder="Mobile number">
+<label>Vehicle Type</label>
+<select id="vehicle">
+<option value="Ertiga">Ertiga - ₹14/KM</option>
+<option value="Dzire">Dzire - ₹12/KM</option>
+<option value="Bike">Bike - Fare confirmation required</option>
+</select>
+<label>Pickup Location</label>
+<input id="pickup" placeholder="Kahan se jana hai?">
+<label>Drop Location</label>
+<input id="drop" placeholder="Kahan tak jana hai?">
+<button onclick="bookNow()">Booking Request</button>
+<p id="message" class="note"></p>
+</div>
+<div class="card">
+<h2>Contact</h2>
+<p>WhatsApp: +91 8874547741</p>
+<p class="note">Booking request abhi is browser mein demo ke roop mein save hogi. Firebase connection agle steps mein jodenge.</p>
+</div>
+</main>
+<script>
+let selectedRole="Customer";
+function setRole(role){
+selectedRole=role;
+document.getElementById("roleText").textContent="Selected role: "+role;
+}
+function bookNow(){
+const data={
+name:document.getElementById("customer").value.trim(),
+phone:document.getElementById("phone").value.trim(),
+vehicle:document.getElementById("vehicle").value,
+pickup:document.getElementById("pickup").value.trim(),
+drop:document.getElementById("drop").value.trim(),
+role:selectedRole,
+createdAt:new Date().toISOString()
+};
+if(!data.name||!data.phone||!data.pickup||!data.drop){
+document.getElementById("message").textContent="Kripya sabhi details bharein.";
+return;
+}
+let bookings=JSON.parse(localStorage.getItem("yaha_v8_bookings")||"[]");
+bookings.push(data);
+localStorage.setItem("yaha_v8_bookings",JSON.stringify(bookings));
+document.getElementById("message").textContent="Booking request save ho gayi!";
+}
+</script>
+</body>
+</html>
