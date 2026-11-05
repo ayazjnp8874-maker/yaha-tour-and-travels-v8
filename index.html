@@ -2,102 +2,257 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YAHA TOUR AND TRAVELS</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#111;color:white;font-family:Arial,sans-serif}
-header{background:#ffd400;color:#111;padding:24px 12px;text-align:center}
-header h1{font-size:24px;margin:0}
-header p{margin:8px 0 0}
-main{max-width:520px;margin:20px auto;padding:14px}
-.card{background:#222;padding:20px;border-radius:14px;margin-bottom:16px}
-h2{color:#ffd400;margin-top:0}
-label{display:block;margin:13px 0 6px}
-input,select{width:100%;padding:13px;border:1px solid #555;border-radius:7px;background:#333;color:white;font-size:16px}
-button{width:100%;padding:15px;border:0;border-radius:8px;background:#ffd400;color:#111;font-size:17px;font-weight:bold;margin-top:18px}
-.price{color:#ffd400;font-weight:bold}
-.note{color:#bbb;font-size:13px;line-height:1.6}
-footer{text-align:center;color:#aaa;padding:20px;font-size:13px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111111">
+  <title>YAHA TOUR AND TRAVELS</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #171717;
+    }
+    header {
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 24px 12px;
+      border-bottom: 5px solid #ffd400;
+    }
+    header h1 {
+      color: #ffd400;
+      margin: 0 0 8px;
+      font-size: 25px;
+    }
+    header p { margin: 5px 0; }
+    .hero {
+      background: #222;
+      color: white;
+      text-align: center;
+      padding: 28px 15px;
+    }
+    .hero h2 { color: #ffd400; margin-top: 0; }
+    .container {
+      max-width: 650px;
+      margin: 20px auto;
+      padding: 0 14px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 18px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px #00000012;
+    }
+    h2, h3 { margin-top: 0; }
+    .fare {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px;
+      background: #fff8cc;
+      border-radius: 8px;
+      margin: 8px 0;
+      font-weight: bold;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 13px 0 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #bbb;
+      border-radius: 7px;
+      font-size: 16px;
+      background: white;
+    }
+    textarea { min-height: 75px; resize: vertical; }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 17px;
+      border: 0;
+      border-radius: 8px;
+      background: #ffd400;
+      color: #111;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #edc500; }
+    .note {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.5;
+    }
+    footer {
+      background: #111;
+      color: white;
+      text-align: center;
+      padding: 20px 10px;
+      margin-top: 25px;
+    }
+    footer a { color: #ffd400; }
+  </style>
 </head>
 <body>
+
 <header>
-<h1>YAHA TOUR AND TRAVELS</h1>
-<p>आपका सफर, हमारी जिम्मेदारी</p>
-<p>Jaunpur, Uttar Pradesh</p>
+  <h1>YAHA TOUR AND TRAVELS</h1>
+  <p>आपका सफर, हमारी जिम्मेदारी</p>
+  <p>Car & Bike Booking Service</p>
 </header>
 
-<main>
-<div class="card">
-<h2>हमारी सेवाएँ</h2>
-<p>🚘 Ertiga – <span class="price">₹14 / KM</span></p>
-<p>🚘 Dzire – <span class="price">₹12 / KM</span></p>
-<p>🏍️ Bike Booking – किराया पूछें</p>
-</div>
+<section class="hero">
+  <h2>Book Your Ride Today!</h2>
+  <p>आसान और सुविधाजनक Car एवं Bike Booking</p>
+</section>
 
-<div class="card">
-<h2>Online Booking</h2>
-<form id="bookingForm">
-<label>आपका नाम</label>
-<input id="name" required placeholder="अपना नाम लिखें">
+<main class="container">
 
-<label>मोबाइल नंबर</label>
-<input id="phone" required type="tel" placeholder="मोबाइल नंबर">
+  <section class="card">
+    <h2>हमारी सेवाएं</h2>
+    <div class="fare">
+      <span>Maruti Ertiga</span>
+      <span>₹14 / KM</span>
+    </div>
+    <div class="fare">
+      <span>Maruti Dzire</span>
+      <span>₹12 / KM</span>
+    </div>
+    <div class="fare">
+      <span>Bike</span>
+      <span>किराया पूछें</span>
+    </div>
+    <p class="note">* अंतिम किराया दूरी, यात्रा और उपलब्धता के अनुसार कन्फर्म किया जाएगा।</p>
+  </section>
 
-<label>वाहन चुनें</label>
-<select id="vehicle" required>
-<option value="">वाहन चुनें</option>
-<option>Ertiga</option>
-<option>Dzire</option>
-<option>Bike</option>
-</select>
+  <section class="card">
+    <h2>नई Booking करें</h2>
 
-<label>कहाँ से जाना है?</label>
-<input id="pickup" required placeholder="Pickup Location">
+    <form id="bookingForm">
+      <label for="customerName">आपका नाम</label>
+      <input id="customerName" type="text" placeholder="अपना नाम लिखें" required>
 
-<label>कहाँ जाना है?</label>
-<input id="drop" required placeholder="Drop Location">
+      <label for="mobile">मोबाइल नंबर</label>
+      <input id="mobile" type="tel" inputmode="numeric"
+        placeholder="10 अंकों का मोबाइल नंबर"
+        pattern="[0-9]{10}" maxlength="10" required>
 
-<label>यात्रा की तारीख</label>
-<input id="date" required type="date">
+      <label for="vehicle">Vehicle चुनें</label>
+      <select id="vehicle" required>
+        <option value="">Vehicle चुनें</option>
+        <option value="Ertiga">Maruti Ertiga - ₹14/KM</option>
+        <option value="Dzire">Maruti Dzire - ₹12/KM</option>
+        <option value="Bike">Bike - किराया पूछें</option>
+      </select>
 
-<label>यात्रियों की संख्या</label>
-<input id="people" type="number" min="1" value="1" required>
+      <label for="pickup">Pickup Location</label>
+      <input id="pickup" type="text" placeholder="कहां से जाना है?" required>
 
-<label>अन्य जानकारी</label>
-<input id="details" placeholder="अतिरिक्त जानकारी (वैकल्पिक)">
+      <label for="destination">Destination</label>
+      <input id="destination" type="text" placeholder="कहां जाना है?" required>
 
-<button type="submit">WhatsApp पर Booking भेजें</button>
-</form>
-<p class="note">बुकिंग की पुष्टि हमारी टीम WhatsApp पर करेगी।</p>
-</div>
+      <label for="travelDate">यात्रा की तारीख</label>
+      <input id="travelDate" type="date" required>
 
-<div class="card">
-<h2>Contact Us</h2>
-<p>📞 +91 88745 47741</p>
-<button onclick="window.open('https://wa.me/918874547741','_blank')">WhatsApp पर संपर्क करें</button>
-</div>
+      <label for="travelTime">यात्रा का समय</label>
+      <input id="travelTime" type="time" required>
+
+      <label for="distance">अनुमानित दूरी (KM)</label>
+      <input id="distance" type="number" min="1" placeholder="जैसे 100">
+
+      <label for="message">अन्य जानकारी</label>
+      <textarea id="message" placeholder="अपनी कोई अतिरिक्त जानकारी लिखें"></textarea>
+
+      <button type="submit">WhatsApp पर Booking भेजें</button>
+    </form>
+    <p class="note">
+      बटन दबाने पर आपकी Booking की जानकारी WhatsApp पर खुलेगी।
+      Booking तभी कन्फर्म होगी जब हमारी टीम इसकी पुष्टि करेगी।
+    </p>
+  </section>
+
+  <section class="card">
+    <h3>संपर्क करें</h3>
+    <p><strong>YAHA TOUR AND TRAVELS</strong></p>
+    <p>WhatsApp / Call: +91 88745 47741</p>
+    <button type="button" onclick="contactWhatsApp()">
+      WhatsApp पर संपर्क करें
+    </button>
+  </section>
+
 </main>
 
-<footer>© YAHA TOUR AND TRAVELS</footer>
+<footer>
+  <p>© 2026 YAHA TOUR AND TRAVELS</p>
+  <p>All Rights Reserved</p>
+</footer>
 
 <script>
-document.getElementById("bookingForm").addEventListener("submit",function(e){
-e.preventDefault();
-const msg =
-"NEW BOOKING - YAHA TOUR AND TRAVELS\n\n"+
-"Name: "+document.getElementById("name").value+"\n"+
-"Phone: "+document.getElementById("phone").value+"\n"+
-"Vehicle: "+document.getElementById("vehicle").value+"\n"+
-"Pickup: "+document.getElementById("pickup").value+"\n"+
-"Drop: "+document.getElementById("drop").value+"\n"+
-"Date: "+document.getElementById("date").value+"\n"+
-"Passengers: "+document.getElementById("people").value+"\n"+
-"Details: "+document.getElementById("details").value;
-window.open("https://wa.me/918874547741?text="+encodeURIComponent(msg),"_blank");
-});
+  const whatsappNumber = "918874547741";
+
+  document.getElementById("travelDate").min =
+    new Date().toISOString().split("T")[0];
+
+  document.getElementById("bookingForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const name = document.getElementById("customerName").value.trim();
+    const mobile = document.getElementById("mobile").value.trim();
+    const vehicle = document.getElementById("vehicle").value;
+    const pickup = document.getElementById("pickup").value.trim();
+    const destination = document.getElementById("destination").value.trim();
+    const date = document.getElementById("travelDate").value;
+    const time = document.getElementById("travelTime").value;
+    const distance = document.getElementById("distance").value;
+    const extra = document.getElementById("message").value.trim();
+
+    if (!/^[0-9]{10}$/.test(mobile)) {
+      alert("कृपया सही 10 अंकों का मोबाइल नंबर लिखें।");
+      return;
+    }
+
+    let rate = 0;
+    if (vehicle === "Ertiga") rate = 14;
+    if (vehicle === "Dzire") rate = 12;
+
+    let estimate = "किराया टीम से पूछें";
+    if (rate > 0 && distance && Number(distance) > 0) {
+      estimate = "₹" + (rate * Number(distance)) + " (अनुमानित)";
+    }
+
+    const bookingId = "YTT-" + Date.now();
+
+    const message =
+      "NEW BOOKING - YAHA TOUR AND TRAVELS\n\n" +
+      "Booking ID: " + bookingId + "\n" +
+      "Name: " + name + "\n" +
+      "Mobile: " + mobile + "\n" +
+      "Vehicle: " + vehicle + "\n" +
+      "Pickup: " + pickup + "\n" +
+      "Destination: " + destination + "\n" +
+      "Date: " + date + "\n" +
+      "Time: " + time + "\n" +
+      "Distance: " + (distance ? distance + " KM" : "Not provided") + "\n" +
+      "Estimated Fare: " + estimate + "\n" +
+      "Other Details: " + (extra || "None") + "\n\n" +
+      "Please confirm my booking.";
+
+    const url = "https://wa.me/" + whatsappNumber +
+      "?text=" + encodeURIComponent(message);
+
+    window.location.href = url;
+  });
+
+  function contactWhatsApp() {
+    window.location.href = "https://wa.me/" + whatsappNumber +
+      "?text=" + encodeURIComponent("Hello YAHA TOUR AND TRAVELS, mujhe booking karni hai.");
+  }
 </script>
+
 </body>
 </html>
