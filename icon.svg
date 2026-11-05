@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="96" fill="#111111"/>
+<path d="M80 300h352l-35-105c-8-24-30-40-55-40H170c-25 0-47 16-55 40L80 300z" fill="#ffd400"/>
+<path d="M64 300h384v95c0 18-14 32-32 32h-20v-36H116v36H96c-18 0-32-14-32-32v-95z" fill="#ffd400"/>
+<circle cx="145" cy="330" r="28" fill="#111111"/><circle cx="367" cy="330" r="28" fill="#111111"/>
+<text x="256" y="125" font-family="Arial,sans-serif" font-size="52" font-weight="bold" text-anchor="middle" fill="#ffd400">YAHA</text>
+</svg>
