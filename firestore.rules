@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
+    }
+    function isActiveDriver() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
+    }
+    match /users/{uid} {
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.role == 'customer'
+        && request.resource.data.active == true;
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow update, delete: if isAdmin();
+    }
+    match /vehicles/{vehicleId} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+    match /bookings_v8/{bookingId} {
+      allow create: if request.resource.data.keys().hasOnly([
+          'bookingId','name','mobile','vehicle','pickup','destination','travelDate',
+          'travelTime','distanceKm','extraDetails','estimatedFare','status','appVersion',
+          'customerUid','customerEmail','createdAt'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.mobile is string
+        && request.resource.data.vehicle is string
+        && request.resource.data.pickup is string
+        && request.resource.data.destination is string
+        && request.resource.data.status == 'new'
+        && request.resource.data.appVersion == 'V8'
+        && (request.resource.data.customerUid == null
+          || (signedIn() && request.resource.data.customerUid == request.auth.uid));
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.customerUid == request.auth.uid)
+        || (isActiveDriver() && resource.data.driverUid == request.auth.uid);
+      allow update: if isAdmin()
+        || (isActiveDriver()
+          && resource.data.driverUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status','driverUpdatedAt'])
+          && request.resource.data.status in ['assigned','accepted','started','completed']);
+      allow delete: if isAdmin();
+    }
+  }
+}
