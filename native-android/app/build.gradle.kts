@@ -8,12 +8,24 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        // Unique package ID so this native app can install alongside the existing YAHA Travels app.
         applicationId = "com.yahatravels.nativeapp"
         minSdk = 23
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            enableV1Signing = true
+            enableV2Signing = true
+        }
+    }
+
+    buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("debug")
+        }
     }
 
     compileOptions {
