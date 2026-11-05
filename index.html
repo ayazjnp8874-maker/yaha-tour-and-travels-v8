@@ -200,7 +200,27 @@
     <p id="adminMessage" class="note" aria-live="polite"></p>
   </section>
 
-<section class="card">
+<section class="card" id="driverPanel">
+    <h2>Driver Login</h2>
+    <p class="note">केवल Admin द्वारा सक्रिय किए गए Driver ही लॉगिन कर सकते हैं।</p>
+    <form id="driverLoginForm">
+      <label for="driverEmail">Driver Email</label>
+      <input id="driverEmail" type="email" placeholder="Driver Email" required>
+      <label for="driverPassword">Password</label>
+      <input id="driverPassword" type="password" placeholder="Driver Password" required>
+      <button type="submit">Driver Login</button>
+    </form>
+    <div id="driverDashboard" hidden>
+      <h3>मेरी Assigned Bookings</h3>
+      <p id="driverWelcome"></p>
+      <button type="button" id="refreshDriverBookings">Refresh</button>
+      <div id="driverBookings" aria-live="polite"></div>
+      <button type="button" id="driverLogout">Logout</button>
+    </div>
+    <p id="driverMessage" class="note" aria-live="polite"></p>
+  </section>
+
+  <section class="card">
     <h3>संपर्क करें</h3>
     <p><strong>YAHA TOUR AND TRAVELS</strong></p>
     <p>WhatsApp / Call: +91 88745 47741</p>
@@ -409,6 +429,49 @@
           }
         });
         card.appendChild(status);
+
+        const assignment = document.createElement("div");
+        assignment.style.marginTop = "10px";
+        const driverSelect = document.createElement("select");
+        driverSelect.innerHTML = '<option value="">Driver चुनें</option>';
+        try {
+          const driversSnap = await bookingsDb.collection("users")
+            .where("role", "==", "driver").where("active", "==", true).get();
+          driversSnap.forEach((driverDoc) => {
+            const d = driverDoc.data();
+            const option = document.createElement("option");
+            option.value = driverDoc.id;
+            option.textContent = (d.name || d.email || "Driver") + (d.phone ? " - " + d.phone : "");
+            option.dataset.name = d.name || d.email || "Driver";
+            if (b.driverUid === driverDoc.id) option.selected = true;
+            driverSelect.appendChild(option);
+          });
+        } catch (driverError) {
+          console.warn("Driver list unavailable", driverError);
+        }
+        const assignButton = document.createElement("button");
+        assignButton.type = "button";
+        assignButton.textContent = "Driver Assign करें";
+        assignButton.addEventListener("click", async () => {
+          if (!driverSelect.value) { alert("पहले Driver चुनें।"); return; }
+          assignButton.disabled = true;
+          try {
+            const chosen = driverSelect.options[driverSelect.selectedIndex];
+            await doc.ref.update({
+              driverUid: driverSelect.value,
+              driverName: chosen.dataset.name,
+              status: "assigned",
+              assignedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            adminMessage.textContent = "Driver booking में assign हो गया।";
+            await loadAdminBookings();
+          } catch (assignError) {
+            adminMessage.textContent = "Driver assign नहीं हुआ: " + assignError.message;
+          } finally { assignButton.disabled = false; }
+        });
+        assignment.appendChild(driverSelect);
+        assignment.appendChild(assignButton);
+        card.appendChild(assignment);
         adminBookings.appendChild(card);
       });
     } catch (err) {
@@ -445,6 +508,82 @@
     adminLoginForm.hidden = false;
     adminBookings.textContent = "";
     adminMessage.textContent = "Logout ho gaya.";
+  });
+
+  // Driver authentication and assigned-trip dashboard
+  const driverLoginForm = document.getElementById("driverLoginForm");
+  const driverDashboard = document.getElementById("driverDashboard");
+  const driverMessage = document.getElementById("driverMessage");
+  const driverBookings = document.getElementById("driverBookings");
+
+  async function loadDriverBookings() {
+    const user = firebase.auth().currentUser;
+    if (!user || !bookingsDb) return;
+    driverBookings.textContent = "आपकी bookings लोड हो रही हैं...";
+    try {
+      const snap = await bookingsDb.collection("bookings_v8")
+        .where("driverUid", "==", user.uid).get();
+      if (snap.empty) { driverBookings.textContent = "अभी कोई booking assign नहीं हुई है।"; return; }
+      driverBookings.innerHTML = "";
+      snap.forEach((doc) => {
+        const b = doc.data();
+        const card = document.createElement("article");
+        card.style.cssText = "border:1px solid #ddd;border-radius:8px;padding:12px;margin:12px 0;";
+        const title = document.createElement("strong");
+        title.textContent = (b.bookingId || doc.id) + " — " + (b.status || "new");
+        const detail = document.createElement("p");
+        detail.style.whiteSpace = "pre-line";
+        detail.textContent = "Customer: " + (b.name || "") + "\nPhone: " + (b.mobile || "") +
+          "\nPickup: " + (b.pickup || "") + "\nDestination: " + (b.destination || "") +
+          "\nDate/Time: " + (b.travelDate || "") + " " + (b.travelTime || "") +
+          "\nVehicle: " + (b.vehicle || "");
+        const status = document.createElement("select");
+        ["assigned", "accepted", "started", "completed"].forEach(v => {
+          const o = document.createElement("option"); o.value = v; o.textContent = v;
+          if ((b.status || "assigned") === v) o.selected = true;
+          status.appendChild(o);
+        });
+        const update = document.createElement("button");
+        update.type = "button"; update.textContent = "Trip Status Update";
+        update.addEventListener("click", async () => {
+          update.disabled = true;
+          try {
+            await doc.ref.update({status: status.value, driverUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()});
+            driverMessage.textContent = "Trip status update हो गया।";
+            await loadDriverBookings();
+          } catch (err) { driverMessage.textContent = "Update नहीं हुआ: " + err.message; }
+          finally { update.disabled = false; }
+        });
+        card.append(title, detail, status, update);
+        driverBookings.appendChild(card);
+      });
+    } catch (err) { driverBookings.textContent = "Bookings load नहीं हुईं: " + err.message; }
+  }
+
+  driverLoginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    driverMessage.textContent = "Login हो रहा है...";
+    try {
+      const email = document.getElementById("driverEmail").value.trim();
+      const password = document.getElementById("driverPassword").value;
+      const credential = await firebase.auth().signInWithEmailAndPassword(email, password);
+      const userDoc = await bookingsDb.collection("users").doc(credential.user.uid).get();
+      if (!userDoc.exists || userDoc.data().role !== "driver" || userDoc.data().active !== true) {
+        await firebase.auth().signOut();
+        throw new Error("इस account को active Driver access नहीं मिला।");
+      }
+      driverLoginForm.hidden = true;
+      driverDashboard.hidden = false;
+      document.getElementById("driverWelcome").textContent = "Logged in: " + credential.user.email;
+      driverMessage.textContent = "Driver login successful.";
+      await loadDriverBookings();
+    } catch (err) { driverMessage.textContent = "Login failed: " + err.message; }
+  });
+  document.getElementById("refreshDriverBookings").addEventListener("click", loadDriverBookings);
+  document.getElementById("driverLogout").addEventListener("click", async () => {
+    await firebase.auth().signOut();
+    driverDashboard.hidden = true; driverLoginForm.hidden = false;
+    driverBookings.textContent = ""; driverMessage.textContent = "Logout हो गया।";
   });
 
   function contactWhatsApp() {
