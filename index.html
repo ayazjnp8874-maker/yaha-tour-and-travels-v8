@@ -179,7 +179,28 @@
     </p>
   </section>
 
-  <section class="card">
+  
+  <section class="card" id="adminPanel">
+    <h2>Admin Login</h2>
+    <p class="note">यह हिस्सा केवल अधिकृत Admin के लिए है।</p>
+    <form id="adminLoginForm">
+      <label for="adminEmail">Admin Email</label>
+      <input id="adminEmail" type="email" placeholder="Admin Email" required>
+      <label for="adminPassword">Password</label>
+      <input id="adminPassword" type="password" placeholder="Admin Password" required>
+      <button type="submit">Admin Login</button>
+    </form>
+    <div id="adminDashboard" hidden>
+      <h3>Bookings Dashboard</h3>
+      <p id="adminWelcome"></p>
+      <button type="button" id="refreshBookings">Refresh Bookings</button>
+      <div id="adminBookings" aria-live="polite"></div>
+      <button type="button" id="adminLogout">Logout</button>
+    </div>
+    <p id="adminMessage" class="note" aria-live="polite"></p>
+  </section>
+
+<section class="card">
     <h3>संपर्क करें</h3>
     <p><strong>YAHA TOUR AND TRAVELS</strong></p>
     <p>WhatsApp / Call: +91 88745 47741</p>
@@ -327,6 +348,103 @@
       });
     });
   }
+
+
+  // Admin login and private bookings dashboard
+  const adminLoginForm = document.getElementById("adminLoginForm");
+  const adminDashboard = document.getElementById("adminDashboard");
+  const adminMessage = document.getElementById("adminMessage");
+  const adminBookings = document.getElementById("adminBookings");
+
+  async function loadAdminBookings() {
+    if (!bookingsDb || !firebase.auth().currentUser) {
+      adminMessage.textContent = "Firebase connection nahi mila. Internet check karein.";
+      return;
+    }
+    adminBookings.textContent = "Bookings load ho rahi hain...";
+    try {
+      const snap = await bookingsDb.collection("bookings_v8")
+        .orderBy("createdAt", "desc").limit(100).get();
+      if (snap.empty) {
+        adminBookings.textContent = "Abhi koi booking nahi hai.";
+        return;
+      }
+      adminBookings.innerHTML = "";
+      snap.forEach((doc) => {
+        const b = doc.data();
+        const card = document.createElement("article");
+        card.style.cssText = "border:1px solid #ddd;border-radius:8px;padding:12px;margin:12px 0;";
+        const heading = document.createElement("strong");
+        heading.textContent = (b.name || "Customer") + " — " + (b.bookingId || doc.id);
+        card.appendChild(heading);
+        const details = document.createElement("p");
+        details.style.whiteSpace = "pre-line";
+        details.textContent =
+          "Mobile: " + (b.mobile || "") + "\nVehicle: " + (b.vehicle || "") +
+          "\nRoute: " + (b.pickup || "") + " → " + (b.destination || "") +
+          "\nDate/Time: " + (b.travelDate || "") + " " + (b.travelTime || "") +
+          "\nDistance: " + (b.distanceKm || "Not given") + " KM" +
+          "\nFare: " + (b.estimatedFare || "") +
+          "\nStatus: " + (b.status || "new");
+        card.appendChild(details);
+        const status = document.createElement("select");
+        ["new", "accepted", "assigned", "completed", "cancelled"].forEach((value) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          if ((b.status || "new") === value) option.selected = true;
+          status.appendChild(option);
+        });
+        status.addEventListener("change", async () => {
+          status.disabled = true;
+          try {
+            await doc.ref.update({ status: status.value });
+            adminMessage.textContent = "Booking status update ho gaya.";
+          } catch (err) {
+            adminMessage.textContent = "Status update nahi hua: " + err.message;
+            status.value = b.status || "new";
+          } finally {
+            status.disabled = false;
+          }
+        });
+        card.appendChild(status);
+        adminBookings.appendChild(card);
+      });
+    } catch (err) {
+      adminBookings.textContent = "Bookings load nahi hui: " + err.message;
+    }
+  }
+
+  adminLoginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    adminMessage.textContent = "Login ho raha hai...";
+    try {
+      const email = document.getElementById("adminEmail").value.trim();
+      const password = document.getElementById("adminPassword").value;
+      const credential = await firebase.auth().signInWithEmailAndPassword(email, password);
+      const userDoc = await bookingsDb.collection("users").doc(credential.user.uid).get();
+      if (!userDoc.exists || userDoc.data().role !== "admin" || userDoc.data().active !== true) {
+        await firebase.auth().signOut();
+        throw new Error("Is account ko active admin access nahi mila. UID aur users document check karein.");
+      }
+      adminLoginForm.hidden = true;
+      adminDashboard.hidden = false;
+      document.getElementById("adminWelcome").textContent = "Logged in: " + credential.user.email;
+      adminMessage.textContent = "Admin login successful.";
+      await loadAdminBookings();
+    } catch (err) {
+      adminMessage.textContent = "Login failed: " + err.message;
+    }
+  });
+
+  document.getElementById("refreshBookings").addEventListener("click", loadAdminBookings);
+  document.getElementById("adminLogout").addEventListener("click", async () => {
+    await firebase.auth().signOut();
+    adminDashboard.hidden = true;
+    adminLoginForm.hidden = false;
+    adminBookings.textContent = "";
+    adminMessage.textContent = "Logout ho gaya.";
+  });
 
   function contactWhatsApp() {
     window.location.href = "https://wa.me/" + whatsappNumber +
