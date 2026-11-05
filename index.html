@@ -296,8 +296,9 @@
     console.error("Firebase initialization error:", firebaseError);
   }
 
-  document.getElementById("travelDate").min =
-    new Date().toISOString().split("T")[0];
+  const today = new Date();
+  const localToday = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
+  document.getElementById("travelDate").min = localToday;
 
   document.getElementById("bookingForm").addEventListener("submit", async function(e) {
     e.preventDefault();
