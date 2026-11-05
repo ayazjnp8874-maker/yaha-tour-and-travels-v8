@@ -8,7 +8,8 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.yahatravels.app"
+        // Unique package ID so this native app can install alongside the existing YAHA Travels app.
+        applicationId = "com.yahatravels.nativeapp"
         minSdk = 23
         targetSdk = 35
         versionCode = 1
