@@ -1,6 +1,8 @@
 package com.yahatravels.app
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -38,11 +40,28 @@ class MainActivity : Activity() {
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url ?: return false
-                return if (url.host == "ayazjnp8874-maker.github.io" ||
-                    url.host == "www.gstatic.com" || url.host == "firebaseapp.com" ||
-                    url.host == "yaha-tour-and-travels.firebaseapp.com" ||
-                    url.host == "wa.me") {
-                    false
+                val scheme = url.scheme ?: ""
+                val host = url.host ?: ""
+                if (scheme == "http" || scheme == "https") {
+                    if (host == "wa.me" || host == "api.whatsapp.com" ||
+                        host == "www.whatsapp.com") {
+                        val intent = Intent(Intent.ACTION_VIEW, url)
+                        try {
+                            startActivity(intent)
+                        } catch (_: Exception) {
+                            Toast.makeText(this@MainActivity, "WhatsApp install ya update karein.", Toast.LENGTH_LONG).show()
+                        }
+                        true
+                    } else {
+                        false
+                    }
+                } else if (scheme == "tel" || scheme == "mailto") {
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, url))
+                    } catch (_: Exception) {
+                        Toast.makeText(this@MainActivity, "Is action ke liye app available nahi hai.", Toast.LENGTH_LONG).show()
+                    }
+                    true
                 } else {
                     false
                 }
