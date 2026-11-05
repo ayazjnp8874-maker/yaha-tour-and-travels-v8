@@ -267,10 +267,10 @@
   <section class="card">
     <h3>संपर्क करें</h3>
     <p><strong>YAHA TOUR AND TRAVELS</strong></p>
-    <p>WhatsApp / Call: +91 88745 47741</p>
-    <button type="button" onclick="contactWhatsApp()">
-      WhatsApp पर संपर्क करें
-    </button>
+    <p>पहला नंबर: <a href="tel:+918874547741">+91 88745 47741</a></p>
+    <p>दूसरा नंबर: <a href="tel:+917068604325">+91 70686 04325</a></p>
+    <button type="button" onclick="contactWhatsApp()">पहले नंबर पर WhatsApp करें</button>
+    <button type="button" onclick="contactWhatsAppSecond()">दूसरे नंबर पर WhatsApp करें</button>
   </section>
 
 </main>
@@ -746,6 +746,10 @@
     driverDashboard.hidden = true; driverLoginForm.hidden = false;
     driverBookings.textContent = ""; driverMessage.textContent = "Logout हो गया।";
   });
+
+  function contactWhatsAppSecond() {
+    window.location.href = "https://wa.me/917068604325?text=" + encodeURIComponent("Hello YAHA TOUR AND TRAVELS, mujhe booking karni hai.");
+  }
 
   function contactWhatsApp() {
     window.location.href = "https://wa.me/" + whatsappNumber +
