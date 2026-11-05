@@ -213,6 +213,23 @@
       <p id="adminWelcome"></p>
       <button type="button" id="refreshBookings">Refresh Bookings</button>
       <div id="adminBookings" aria-live="polite"></div>
+      <hr><h3>Vehicle Management</h3>
+      <form id="vehicleForm">
+        <label for="vehicleName">Vehicle Name</label><input id="vehicleName" placeholder="Ertiga / Dzire / Bike" required>
+        <label for="vehicleType">Type</label><select id="vehicleType"><option>Car</option><option>Bike</option></select>
+        <label for="vehicleRate">Rate (₹/KM; Bike के लिए 0)</label><input id="vehicleRate" type="number" min="0" value="0" required>
+        <label for="vehicleNote">Details</label><input id="vehicleNote" placeholder="Own / Attached / Model / Number">
+        <button type="submit">Vehicle Save करें</button>
+      </form><div id="vehicleList"></div>
+      <h3>Driver Profiles</h3>
+      <p class="note">Driver का Firebase Auth account पहले बनाएं, फिर उसका UID यहाँ जोड़ें।</p>
+      <form id="driverProfileForm">
+        <label for="driverUidInput">Firebase Auth UID</label><input id="driverUidInput" required>
+        <label for="driverNameInput">Driver Name</label><input id="driverNameInput" required>
+        <label for="driverEmailInput">Driver Email</label><input id="driverEmailInput" type="email" required>
+        <label for="driverPhoneInput">Mobile</label><input id="driverPhoneInput" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+        <button type="submit">Driver Profile Save करें</button>
+      </form><div id="driverProfileList"></div>
       <button type="button" id="adminLogout">Logout</button>
     </div>
     <p id="adminMessage" class="note" aria-live="polite"></p>
@@ -544,6 +561,7 @@
             });
             adminMessage.textContent = "Driver booking में assign हो गया।";
             await loadAdminBookings();
+      await loadAdminResources();
           } catch (assignError) {
             adminMessage.textContent = "Driver assign नहीं हुआ: " + assignError.message;
           } finally { assignButton.disabled = false; }
@@ -589,6 +607,33 @@
     adminMessage.textContent = "Logout ho gaya.";
   });
 
+  // Admin vehicle and driver profile management
+  async function loadAdminResources() {
+    if (!bookingsDb || !firebase.auth().currentUser) return;
+    const vl=document.getElementById("vehicleList"), dl=document.getElementById("driverProfileList");
+    try {
+      const vs=await bookingsDb.collection("vehicles").get(); vl.innerHTML="";
+      if(vs.empty) vl.textContent="अभी कोई vehicle नहीं जोड़ा गया।";
+      vs.forEach(d=>{ const v=d.data(), row=document.createElement("p"); row.textContent=(v.name||"Vehicle")+" | "+(v.type||"")+" | ₹"+(v.ratePerKm||0)+"/KM | "+(v.active===false?"Inactive":"Active"); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===false?"Activate":"Deactivate"; b.addEventListener("click",async()=>{await d.ref.update({active:v.active===false}); await loadAdminResources();}); row.appendChild(b); vl.appendChild(row); });
+      const ds=await bookingsDb.collection("users").where("role","==","driver").get(); dl.innerHTML="";
+      if(ds.empty) dl.textContent="अभी Driver profile नहीं है।";
+      ds.forEach(d=>{ const v=d.data(), row=document.createElement("p"); row.textContent=(v.name||v.email||d.id)+" | "+(v.phone||"")+" | "+(v.active===true?"Active":"Inactive"); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===true?"Deactivate":"Activate"; b.addEventListener("click",async()=>{await d.ref.update({active:v.active!==true}); await loadAdminResources();}); row.appendChild(b); dl.appendChild(row); });
+    } catch(err) { vl.textContent="Vehicle/Driver data load नहीं हुआ: "+err.message; dl.textContent="Firebase Rules जाँचें: "+err.message; }
+  }
+  document.getElementById("vehicleForm").addEventListener("submit",async e=>{
+    e.preventDefault(); try {
+      await bookingsDb.collection("vehicles").add({name:document.getElementById("vehicleName").value.trim(),type:document.getElementById("vehicleType").value,ratePerKm:Number(document.getElementById("vehicleRate").value),note:document.getElementById("vehicleNote").value.trim(),active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      e.target.reset(); document.getElementById("vehicleRate").value="0"; document.getElementById("adminMessage").textContent="Vehicle save हो गया।"; await loadAdminResources();
+    } catch(err) { document.getElementById("adminMessage").textContent="Vehicle save नहीं हुआ: "+err.message; }
+  });
+  document.getElementById("driverProfileForm").addEventListener("submit",async e=>{
+    e.preventDefault(); try {
+      const phone=document.getElementById("driverPhoneInput").value.trim(); if(!/^[0-9]{10}$/.test(phone)) throw new Error("10 अंकों का मोबाइल नंबर लिखें।");
+      const uid=document.getElementById("driverUidInput").value.trim();
+      await bookingsDb.collection("users").doc(uid).set({name:document.getElementById("driverNameInput").value.trim(),email:document.getElementById("driverEmailInput").value.trim(),phone:phone,role:"driver",active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+      e.target.reset(); document.getElementById("adminMessage").textContent="Driver profile save हो गई।"; await loadAdminResources();
+    } catch(err) { document.getElementById("adminMessage").textContent="Driver profile नहीं बनी: "+err.message; }
+  });
   // Driver authentication and assigned-trip dashboard
   const driverLoginForm = document.getElementById("driverLoginForm");
   const driverDashboard = document.getElementById("driverDashboard");
