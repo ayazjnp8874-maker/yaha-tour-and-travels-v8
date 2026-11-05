@@ -168,7 +168,7 @@
         <option value="">Vehicle चुनें</option>
         <option value="Ertiga">Maruti Ertiga - ₹14/KM</option>
         <option value="Dzire">Maruti Dzire - ₹12/KM</option>
-        <option value="Bike">Bike - किराया पूछें</option>
+        <option value="Bike" data-rate="0">Bike - किराया पूछें</option>
       </select>
 
       <label for="pickup">Pickup Location</label>
@@ -317,9 +317,9 @@
       return;
     }
 
-    let rate = 0;
-    if (vehicle === "Ertiga") rate = 14;
-    if (vehicle === "Dzire") rate = 12;
+    const selectedVehicle = document.getElementById("vehicle").selectedOptions[0];
+    const rate = Number(selectedVehicle && selectedVehicle.dataset.rate || 0);
+    const vehicleLabel = selectedVehicle ? selectedVehicle.textContent : vehicle;
 
     let estimate = "किराया टीम से पूछें";
     if (rate > 0 && distance && Number(distance) > 0) {
@@ -333,7 +333,7 @@
       "Booking ID: " + bookingId + "\n" +
       "Name: " + name + "\n" +
       "Mobile: " + mobile + "\n" +
-      "Vehicle: " + vehicle + "\n" +
+      "Vehicle: " + vehicleLabel + "\n" +
       "Pickup: " + pickup + "\n" +
       "Destination: " + destination + "\n" +
       "Date: " + date + "\n" +
@@ -351,7 +351,7 @@
           bookingId: bookingId,
           name: name,
           mobile: mobile,
-          vehicle: vehicle,
+          vehicle: vehicleLabel,
           pickup: pickup,
           destination: destination,
           travelDate: date,
@@ -593,6 +593,7 @@
       document.getElementById("adminWelcome").textContent = "Logged in: " + credential.user.email;
       adminMessage.textContent = "Admin login successful.";
       await loadAdminBookings();
+      await loadAdminResources();
     } catch (err) {
       adminMessage.textContent = "Login failed: " + err.message;
     }
@@ -606,6 +607,28 @@
     adminBookings.textContent = "";
     adminMessage.textContent = "Logout ho gaya.";
   });
+
+  // Load active admin-managed vehicles into the customer booking form
+  async function loadBookingVehicles() {
+    const select = document.getElementById("vehicle");
+    if (!select || !bookingsDb) return;
+    try {
+      const snap = await bookingsDb.collection("vehicles").where("active", "==", true).get();
+      if (snap.empty) return; // Keep Ertiga, Dzire and Bike defaults until admin adds vehicles.
+      select.innerHTML = '<option value="">Vehicle चुनें</option>';
+      snap.forEach(doc => {
+        const v = doc.data();
+        const option = document.createElement("option");
+        option.value = v.name || doc.id;
+        option.textContent = (v.name || "Vehicle") + " - " + (Number(v.ratePerKm) > 0 ? "₹" + v.ratePerKm + "/KM" : "किराया पूछें");
+        option.dataset.rate = String(Number(v.ratePerKm) || 0);
+        select.appendChild(option);
+      });
+    } catch (err) {
+      console.warn("Admin vehicle list unavailable; default choices remain.", err);
+    }
+  }
+  loadBookingVehicles();
 
   // Admin vehicle and driver profile management
   async function loadAdminResources() {
