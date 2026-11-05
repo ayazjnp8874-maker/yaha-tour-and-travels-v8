@@ -133,6 +133,24 @@
     <p class="note">* अंतिम किराया दूरी, यात्रा और उपलब्धता के अनुसार कन्फर्म किया जाएगा।</p>
   </section>
 
+<section class="card" id="customerPanel">
+<h2>Customer Login / Registration</h2>
+<p class="note">Account बनाकर अपनी bookings देख सकते हैं। बिना account भी booking कर सकते हैं।</p>
+<form id="customerRegisterForm">
+<h3>नया Account</h3>
+<label for="customerAccountName">नाम</label><input id="customerAccountName" required>
+<label for="customerAccountPhone">मोबाइल नंबर</label><input id="customerAccountPhone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+<label for="customerRegisterEmail">Email</label><input id="customerRegisterEmail" type="email" required>
+<label for="customerRegisterPassword">Password (कम से कम 6 अक्षर)</label><input id="customerRegisterPassword" type="password" minlength="6" required>
+<button type="submit">Register करें</button></form>
+<form id="customerLoginForm"><h3>Customer Login</h3>
+<label for="customerLoginEmail">Email</label><input id="customerLoginEmail" type="email" required>
+<label for="customerLoginPassword">Password</label><input id="customerLoginPassword" type="password" required>
+<button type="submit">Login करें</button></form>
+<div id="customerAccountArea" hidden><p id="customerWelcome"></p>
+<button type="button" id="refreshCustomerBookings">मेरी Bookings देखें</button>
+<div id="customerBookings"></div><button type="button" id="customerLogout">Logout</button></div>
+<p id="customerMessage" class="note" aria-live="polite"></p></section>
   <section class="card">
     <h2>नई Booking करें</h2>
 
@@ -326,6 +344,8 @@
           estimatedFare: estimate,
           status: "new",
           appVersion: "V8",
+          customerUid: firebase.auth().currentUser ? firebase.auth().currentUser.uid : null,
+          customerEmail: firebase.auth().currentUser ? firebase.auth().currentUser.email : null,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         cloudSaved = true;
@@ -341,6 +361,65 @@
       alert("Booking WhatsApp par bheji jayegi, lekin cloud save nahi ho payi. Internet aur Firestore Rules check karne honge.");
     }
     window.location.href = url;
+  });
+
+
+  // Customer registration, login and booking history
+  const crf = document.getElementById("customerRegisterForm");
+  const clf = document.getElementById("customerLoginForm");
+  const ca = document.getElementById("customerAccountArea");
+  const cm = document.getElementById("customerMessage");
+  const cb = document.getElementById("customerBookings");
+  async function loadCustomerBookings() {
+    const user = firebase.auth().currentUser;
+    if (!user || !bookingsDb) return;
+    cb.textContent = "Bookings लोड हो रही हैं...";
+    try {
+      const snap = await bookingsDb.collection("bookings_v8").where("customerUid", "==", user.uid).get();
+      if (snap.empty) { cb.textContent = "अभी कोई booking नहीं है।"; return; }
+      cb.innerHTML = "";
+      snap.forEach(doc => {
+        const b = doc.data(), item = document.createElement("article");
+        item.style.cssText = "border:1px solid #ddd;padding:12px;margin:10px 0;border-radius:8px";
+        const h = document.createElement("strong"), p = document.createElement("p");
+        h.textContent = (b.bookingId || doc.id) + " — " + (b.status || "new");
+        p.textContent = (b.vehicle || "") + " | " + (b.pickup || "") + " से " + (b.destination || "") + " | " + (b.travelDate || "") + " " + (b.travelTime || "");
+        item.append(h,p); cb.appendChild(item);
+      });
+    } catch(err) { cb.textContent = "History load नहीं हुई: " + err.message; }
+  }
+  async function showCustomer(user) {
+    crf.hidden = true; clf.hidden = true; ca.hidden = false;
+    document.getElementById("customerWelcome").textContent = "Logged in: " + user.email;
+    await loadCustomerBookings();
+  }
+  crf.addEventListener("submit", async e => {
+    e.preventDefault(); cm.textContent = "Registration हो रहा है...";
+    try {
+      const name = document.getElementById("customerAccountName").value.trim();
+      const phone = document.getElementById("customerAccountPhone").value.trim();
+      if (!/^[0-9]{10}$/.test(phone)) throw new Error("10 अंकों का मोबाइल नंबर लिखें।");
+      const email = document.getElementById("customerRegisterEmail").value.trim();
+      const password = document.getElementById("customerRegisterPassword").value;
+      const c = await firebase.auth().createUserWithEmailAndPassword(email,password);
+      await bookingsDb.collection("users").doc(c.user.uid).set({name,phone,email,role:"customer",active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      cm.textContent = "Registration सफल हुआ।"; await showCustomer(c.user);
+    } catch(err) { cm.textContent = "Registration नहीं हुआ: " + err.message; }
+  });
+  clf.addEventListener("submit", async e => {
+    e.preventDefault(); cm.textContent = "Login हो रहा है...";
+    try {
+      const email = document.getElementById("customerLoginEmail").value.trim();
+      const password = document.getElementById("customerLoginPassword").value;
+      const c = await firebase.auth().signInWithEmailAndPassword(email,password);
+      const p = await bookingsDb.collection("users").doc(c.user.uid).get();
+      if (!p.exists || p.data().role !== "customer" || p.data().active !== true) { await firebase.auth().signOut(); throw new Error("यह active Customer account नहीं है।"); }
+      cm.textContent = "Login सफल हुआ।"; await showCustomer(c.user);
+    } catch(err) { cm.textContent = "Login failed: " + err.message; }
+  });
+  document.getElementById("refreshCustomerBookings").addEventListener("click",loadCustomerBookings);
+  document.getElementById("customerLogout").addEventListener("click",async()=>{
+    await firebase.auth().signOut(); ca.hidden=true; crf.hidden=false; clf.hidden=false; cb.textContent=""; cm.textContent="Logout हो गया।";
   });
 
   let installPrompt = null;
