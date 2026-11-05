@@ -487,6 +487,15 @@
         return;
       }
       adminBookings.innerHTML = "";
+      // Fetch active drivers once, not once for every booking card.
+      let activeDrivers = [];
+      try {
+        const driversSnap = await bookingsDb.collection("users")
+          .where("role", "==", "driver").where("active", "==", true).get();
+        activeDrivers = driversSnap.docs;
+      } catch (driverError) {
+        console.warn("Driver list unavailable", driverError);
+      }
       snap.forEach((doc) => {
         const b = doc.data();
         const card = document.createElement("article");
@@ -530,21 +539,15 @@
         assignment.style.marginTop = "10px";
         const driverSelect = document.createElement("select");
         driverSelect.innerHTML = '<option value="">Driver चुनें</option>';
-        try {
-          const driversSnap = await bookingsDb.collection("users")
-            .where("role", "==", "driver").where("active", "==", true).get();
-          driversSnap.forEach((driverDoc) => {
-            const d = driverDoc.data();
-            const option = document.createElement("option");
-            option.value = driverDoc.id;
-            option.textContent = (d.name || d.email || "Driver") + (d.phone ? " - " + d.phone : "");
-            option.dataset.name = d.name || d.email || "Driver";
-            if (b.driverUid === driverDoc.id) option.selected = true;
-            driverSelect.appendChild(option);
-          });
-        } catch (driverError) {
-          console.warn("Driver list unavailable", driverError);
-        }
+        activeDrivers.forEach((driverDoc) => {
+          const d = driverDoc.data();
+          const option = document.createElement("option");
+          option.value = driverDoc.id;
+          option.textContent = (d.name || d.email || "Driver") + (d.phone ? " - " + d.phone : "");
+          option.dataset.name = d.name || d.email || "Driver";
+          if (b.driverUid === driverDoc.id) option.selected = true;
+          driverSelect.appendChild(option);
+        });
         const assignButton = document.createElement("button");
         assignButton.type = "button";
         assignButton.textContent = "Driver Assign करें";
