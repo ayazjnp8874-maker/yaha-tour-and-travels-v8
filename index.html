@@ -195,13 +195,34 @@
   <p>All Rights Reserved</p>
 </footer>
 
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
   const whatsappNumber = "918874547741";
+
+  // YAHA TOUR AND TRAVELS V8 - Firebase connection
+  const firebaseConfig = {
+    apiKey: "AIzaSyDYZ6EBdEsBoO96Th0YTEzSexWvZ35ZrYs",
+    authDomain: "yaha-tour-and-travels.firebaseapp.com",
+    projectId: "yaha-tour-and-travels",
+    storageBucket: "yaha-tour-and-travels.firebasestorage.app",
+    messagingSenderId: "614874866859",
+    appId: "1:614874866859:web:2b744c547c3dfcc00203ee",
+    measurementId: "G-2PK8EMRP1N"
+  };
+
+  let bookingsDb = null;
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    bookingsDb = firebase.firestore();
+  } catch (firebaseError) {
+    console.error("Firebase initialization error:", firebaseError);
+  }
 
   document.getElementById("travelDate").min =
     new Date().toISOString().split("T")[0];
 
-  document.getElementById("bookingForm").addEventListener("submit", function(e) {
+  document.getElementById("bookingForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
     const name = document.getElementById("customerName").value.trim();
@@ -245,9 +266,38 @@
       "Other Details: " + (extra || "None") + "\n\n" +
       "Please confirm my booking.";
 
+    // Save booking to Firestore first. WhatsApp will still open if cloud save fails.
+    let cloudSaved = false;
+    if (bookingsDb) {
+      try {
+        await bookingsDb.collection("bookings_v8").add({
+          bookingId: bookingId,
+          name: name,
+          mobile: mobile,
+          vehicle: vehicle,
+          pickup: pickup,
+          destination: destination,
+          travelDate: date,
+          travelTime: time,
+          distanceKm: distance && Number(distance) > 0 ? Number(distance) : null,
+          extraDetails: extra,
+          estimatedFare: estimate,
+          status: "new",
+          appVersion: "V8",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        cloudSaved = true;
+      } catch (saveError) {
+        console.error("Booking cloud save failed:", saveError);
+      }
+    }
+
     const url = "https://wa.me/" + whatsappNumber +
       "?text=" + encodeURIComponent(message);
 
+    if (!cloudSaved) {
+      alert("Booking WhatsApp par bheji jayegi, lekin cloud save nahi ho payi. Internet aur Firestore Rules check karne honge.");
+    }
     window.location.href = url;
   });
 
