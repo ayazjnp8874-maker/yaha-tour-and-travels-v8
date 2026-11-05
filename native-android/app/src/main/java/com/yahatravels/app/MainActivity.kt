@@ -42,7 +42,7 @@ class MainActivity : Activity() {
                 val url = request?.url ?: return false
                 val scheme = url.scheme ?: ""
                 val host = url.host ?: ""
-                if (scheme == "http" || scheme == "https") {
+                return if (scheme == "http" || scheme == "https") {
                     if (host == "wa.me" || host == "api.whatsapp.com" ||
                         host == "www.whatsapp.com") {
                         val intent = Intent(Intent.ACTION_VIEW, url)
