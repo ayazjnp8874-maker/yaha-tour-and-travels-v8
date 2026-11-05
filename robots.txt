@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ayazjnp8874-maker.github.io/yaha-tour-and-travels-v8/sitemap.xml
