@@ -268,6 +268,7 @@
 
 <footer>
   <p>© 2026 YAHA TOUR AND TRAVELS</p>
+  <p><a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms &amp; Conditions</a></p>
   <p>All Rights Reserved</p>
 </footer>
 
@@ -641,10 +642,10 @@
     try {
       const vs=await bookingsDb.collection("vehicles").get(); vl.innerHTML="";
       if(vs.empty) vl.textContent="अभी कोई vehicle नहीं जोड़ा गया।";
-      vs.forEach(d=>{ const v=d.data(), row=document.createElement("p"); row.textContent=(v.name||"Vehicle")+" | "+(v.type||"")+" | ₹"+(v.ratePerKm||0)+"/KM | "+(v.active===false?"Inactive":"Active"); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===false?"Activate":"Deactivate"; b.addEventListener("click",async()=>{await d.ref.update({active:v.active===false}); await loadAdminResources();}); row.appendChild(b); vl.appendChild(row); });
+      vs.forEach(d=>{ const v=d.data(), row=document.createElement("p"); row.textContent=(v.name||"Vehicle")+" | "+(v.type||"")+" | ₹"+(v.ratePerKm||0)+"/KM | "+(v.active===false?"Inactive":"Active"); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===false?"Activate":"Deactivate"; b.addEventListener("click",async()=>{b.disabled=true; try { await d.ref.update({active:v.active===false}); document.getElementById("adminMessage").textContent="Vehicle status update ho gaya."; await loadAdminResources(); } catch(err) { document.getElementById("adminMessage").textContent="Vehicle status update nahi hua: "+err.message; b.disabled=false; }}); row.appendChild(b); vl.appendChild(row); });
       const ds=await bookingsDb.collection("users").where("role","==","driver").get(); dl.innerHTML="";
       if(ds.empty) dl.textContent="अभी Driver profile नहीं है।";
-      ds.forEach(d=>{ const v=d.data(), row=document.createElement("p"); row.textContent=(v.name||v.email||d.id)+" | "+(v.phone||"")+" | "+(v.active===true?"Active":"Inactive"); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===true?"Deactivate":"Activate"; b.addEventListener("click",async()=>{await d.ref.update({active:v.active!==true}); await loadAdminResources();}); row.appendChild(b); dl.appendChild(row); });
+      ds.forEach(d=>{ const v=d.data(), row=document.createElement("p"); row.textContent=(v.name||v.email||d.id)+" | "+(v.phone||"")+" | "+(v.active===true?"Active":"Inactive"); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===true?"Deactivate":"Activate"; b.addEventListener("click",async()=>{b.disabled=true; try { await d.ref.update({active:v.active!==true}); document.getElementById("adminMessage").textContent="Driver status update ho gaya."; await loadAdminResources(); } catch(err) { document.getElementById("adminMessage").textContent="Driver status update nahi hua: "+err.message; b.disabled=false; }}); row.appendChild(b); dl.appendChild(row); });
     } catch(err) { vl.textContent="Vehicle/Driver data load नहीं हुआ: "+err.message; dl.textContent="Firebase Rules जाँचें: "+err.message; }
   }
   document.getElementById("vehicleForm").addEventListener("submit",async e=>{
