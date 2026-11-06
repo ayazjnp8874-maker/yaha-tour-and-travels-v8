@@ -517,6 +517,31 @@
         return;
       }
       adminBookings.innerHTML = "";
+      // Admin overview: booking counts and completed-trip estimated revenue.
+      const report = document.createElement("section");
+      report.style.cssText = "background:#fff8dc;border:1px solid #e5c34b;border-radius:10px;padding:12px;margin:10px 0 16px;";
+      const allBookings = snap.docs.map(d => d.data());
+      const countStatus = value => allBookings.filter(b => (b.status || "new") === value).length;
+      const completedRevenue = allBookings
+        .filter(b => b.status === "completed")
+        .reduce((sum, b) => {
+          const amount = Number(String(b.estimatedFare || "").replace(/[^0-9.]/g, ""));
+          return sum + (Number.isFinite(amount) ? amount : 0);
+        }, 0);
+      const reportTitle = document.createElement("strong");
+      reportTitle.textContent = "Booking Report (पिछली 100 बुकिंग)";
+      const reportText = document.createElement("p");
+      reportText.style.cssText = "margin:8px 0 0;line-height:1.8;";
+      reportText.textContent = "कुल: " + allBookings.length +
+        " | नई: " + countStatus("new") +
+        " | Assigned: " + countStatus("assigned") +
+        " | चालू: " + (countStatus("started") + countStatus("accepted")) +
+        " | पूरी: " + countStatus("completed") +
+        " | रद्द: " + countStatus("cancelled") +
+        "\\nपूरी हुई यात्राओं का अनुमानित किराया: ₹" + completedRevenue.toLocaleString("en-IN");
+      report.appendChild(reportTitle);
+      report.appendChild(reportText);
+      adminBookings.appendChild(report);
       // Fetch active drivers once, not once for every booking card.
       let activeDrivers = [];
       try {
