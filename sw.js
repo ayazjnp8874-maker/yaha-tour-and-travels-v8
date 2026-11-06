@@ -1,4 +1,4 @@
-const CACHE_NAME = "yaha-travels-v2";
+const CACHE_NAME = "yaha-travels-v3";
 const APP_FILES = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", event => {
@@ -19,16 +19,30 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      const fresh = fetch(event.request).then(response => {
-        if (response && response.ok && new URL(event.request.url).origin === self.location.origin) {
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Always check the latest HTML from GitHub Pages first.
+  if (event.request.mode === "navigate" || url.pathname.endsWith(".html") || url.pathname.endsWith("/")) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response && response.ok) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         }
         return response;
-      }).catch(() => cached);
-      return cached || fresh;
-    })
+      }).catch(() => caches.match(event.request).then(cached => cached || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+      if (response && response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+      }
+      return response;
+    }))
   );
 });
