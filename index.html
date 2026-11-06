@@ -438,7 +438,36 @@
         const h = document.createElement("strong"), p = document.createElement("p");
         h.textContent = (b.bookingId || doc.id) + " — " + (b.status || "new");
         p.textContent = (b.vehicle || "") + " | " + (b.pickup || "") + " से " + (b.destination || "") + " | " + (b.travelDate || "") + " " + (b.travelTime || "");
-        item.append(h,p); cb.appendChild(item);
+        item.append(h,p);
+        if (["new","assigned"].includes(b.status || "new") && b.customerUid === user.uid) {
+          const cancel = document.createElement("button");
+          cancel.type = "button";
+          cancel.textContent = "बुकिंग रद्द करने का अनुरोध";
+          cancel.style.cssText = "background:#8b1e1e;color:white;padding:9px 12px;border:0;border-radius:6px;";
+          const result = document.createElement("small");
+          result.style.display = "block";
+          cancel.addEventListener("click", async () => {
+            if (!confirm("क्या आप इस बुकिंग को रद्द करने का अनुरोध भेजना चाहते हैं?")) return;
+            cancel.disabled = true;
+            try {
+              await doc.ref.update({
+                customerCancelRequested: true,
+                customerCancelRequestedAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              result.textContent = "रद्द करने का अनुरोध Admin को भेज दिया गया है।";
+              cancel.remove();
+            } catch (err) {
+              result.textContent = "अनुरोध नहीं भेजा गया: " + err.message;
+              cancel.disabled = false;
+            }
+          });
+          item.append(cancel, result);
+        } else if (b.customerCancelRequested) {
+          const requestNote = document.createElement("p");
+          requestNote.textContent = "रद्द करने का अनुरोध भेजा गया है।";
+          item.appendChild(requestNote);
+        }
+        cb.appendChild(item);
       });
     } catch(err) { cb.textContent = "History load नहीं हुई: " + err.message; }
   }
