@@ -676,20 +676,50 @@
   }
   document.getElementById("vehicleCancelEdit").addEventListener("click",resetVehicleEditor);
   document.getElementById("vehicleForm").addEventListener("submit",async e=>{
-    e.preventDefault(); try {
-      const form=e.target;
-      const vehicleData={name:document.getElementById("vehicleName").value.trim(),type:document.getElementById("vehicleType").value,ratePerKm:Number(document.getElementById("vehicleRate").value),note:document.getElementById("vehicleNote").value.trim()};
-      if(!vehicleData.name || !Number.isFinite(vehicleData.ratePerKm) || vehicleData.ratePerKm<0) throw new Error("Vehicle name और सही किराया भरें।");
+    e.preventDefault();
+    const form=e.target;
+    const saveButton=document.getElementById("vehicleSaveButton");
+    saveButton.disabled=true;
+    try {
+      if(!bookingsDb) throw new Error("Firebase connection उपलब्ध नहीं है।");
+      const vehicleData={
+        name:document.getElementById("vehicleName").value.trim(),
+        type:document.getElementById("vehicleType").value,
+        ratePerKm:Number(document.getElementById("vehicleRate").value),
+        note:document.getElementById("vehicleNote").value.trim()
+      };
+      if(!vehicleData.name || !Number.isFinite(vehicleData.ratePerKm) || vehicleData.ratePerKm<0)
+        throw new Error("Vehicle name और सही किराया भरें।");
+
       const editId=form.dataset.editId;
+      // Stop accidental duplicate active entries with the same name, type and details.
+      const matches=await bookingsDb.collection("vehicles")
+        .where("name","==",vehicleData.name)
+        .where("type","==",vehicleData.type).get();
+      const duplicate=matches.docs.find(d =>
+        d.id!==editId && d.data().active!==false &&
+        (d.data().note||"")===vehicleData.note
+      );
+      if(duplicate) throw new Error("यह वाहन इसी जानकारी के साथ पहले से Active है। सूची में उसका Edit करें।");
+
       if(editId) {
         await bookingsDb.collection("vehicles").doc(editId).update(vehicleData);
         document.getElementById("adminMessage").textContent="Vehicle और किराया update हो गया।";
       } else {
-        await bookingsDb.collection("vehicles").add({...vehicleData,active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        await bookingsDb.collection("vehicles").add({
+          ...vehicleData,active:true,
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
         document.getElementById("adminMessage").textContent="Vehicle save हो गया।";
       }
-      resetVehicleEditor(); await loadAdminResources(); await loadBookingVehicles();
-    } catch(err) { document.getElementById("adminMessage").textContent="Vehicle save/update नहीं हुआ: "+err.message; }
+      resetVehicleEditor();
+      await loadAdminResources();
+      await loadBookingVehicles();
+    } catch(err) {
+      document.getElementById("adminMessage").textContent="Vehicle save/update नहीं हुआ: "+err.message;
+    } finally {
+      saveButton.disabled=false;
+    }
   });
   document.getElementById("driverProfileForm").addEventListener("submit",async e=>{
     e.preventDefault(); try {
