@@ -520,11 +520,26 @@
       // Fetch active drivers once, not once for every booking card.
       let activeDrivers = [];
       try {
-        const driversSnap = await bookingsDb.collection("users")
+        const byRole = await bookingsDb.collection("users")
           .where("role", "==", "driver").where("active", "==", true).get();
-        activeDrivers = driversSnap.docs;
+        const byRoles = await bookingsDb.collection("users")
+          .where("roles", "array-contains", "driver").where("active", "==", true).get();
+        const driverMap = new Map();
+        byRole.docs.concat(byRoles.docs).forEach(d => driverMap.set(d.id, d));
+        // Include the currently logged-in account if its profile grants driver access.
+        const currentUser = firebase.auth().currentUser;
+        if (currentUser) {
+          const ownProfile = await bookingsDb.collection("users").doc(currentUser.uid).get();
+          if (ownProfile.exists) {
+            const p = ownProfile.data();
+            const hasDriverRole = p.role === "driver" || (Array.isArray(p.roles) && p.roles.map(x => String(x).trim().toLowerCase()).includes("driver"));
+            if (hasDriverRole && p.active === true) driverMap.set(ownProfile.id, ownProfile);
+          }
+        }
+        activeDrivers = Array.from(driverMap.values());
       } catch (driverError) {
         console.warn("Driver list unavailable", driverError);
+        adminMessage.textContent = "Driver list load नहीं हुई: " + driverError.message;
       }
       snap.forEach((doc) => {
         const b = doc.data();
