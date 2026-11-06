@@ -228,7 +228,8 @@
         <label for="vehicleType">Type</label><select id="vehicleType"><option>Car</option><option>Bike</option></select>
         <label for="vehicleRate">Rate (₹/KM; Bike के लिए 0)</label><input id="vehicleRate" type="number" min="0" value="0" required>
         <label for="vehicleNote">Details</label><input id="vehicleNote" placeholder="Own / Attached / Model / Number">
-        <button type="submit">Vehicle Save करें</button>
+        <button type="submit" id="vehicleSaveButton">Vehicle Save करें</button>
+        <button type="button" id="vehicleCancelEdit" hidden>Editing रद्द करें</button>
       </form><div id="vehicleList"></div>
       <h3>Driver Profiles</h3>
       <p class="note">Driver का Firebase Auth account पहले बनाएं, फिर उसका UID यहाँ जोड़ें।</p>
@@ -653,17 +654,36 @@
     try {
       const vs=await bookingsDb.collection("vehicles").get(); vl.innerHTML="";
       if(vs.empty) vl.textContent="अभी कोई vehicle नहीं जोड़ा गया।";
-      vs.forEach(d=>{ const v=d.data(), row=document.createElement("p"); row.textContent=(v.name||"Vehicle")+" | "+(v.type||"")+" | ₹"+(v.ratePerKm||0)+"/KM | "+(v.active===false?"Inactive":"Active"); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===false?"Activate":"Deactivate"; b.addEventListener("click",async()=>{b.disabled=true; try { await d.ref.update({active:v.active===false}); document.getElementById("adminMessage").textContent="Vehicle status update ho gaya."; await loadAdminResources(); } catch(err) { document.getElementById("adminMessage").textContent="Vehicle status update nahi hua: "+err.message; b.disabled=false; }}); row.appendChild(b); vl.appendChild(row); });
+      vs.forEach(d=>{ const v=d.data(), row=document.createElement("div"); row.style.cssText="border:1px solid #ddd;padding:10px;margin:8px 0;border-radius:8px"; const info=document.createElement("p"); info.textContent=(v.name||"Vehicle")+" | "+(v.type||"")+" | ₹"+(v.ratePerKm||0)+"/KM | "+(v.active===false?"Inactive":"Active"); row.appendChild(info); const edit=document.createElement("button"); edit.type="button"; edit.textContent="Edit / किराया बदलें"; edit.addEventListener("click",()=>{ document.getElementById("vehicleName").value=v.name||""; document.getElementById("vehicleType").value=v.type||"Car"; document.getElementById("vehicleRate").value=Number(v.ratePerKm)||0; document.getElementById("vehicleNote").value=v.note||""; document.getElementById("vehicleForm").dataset.editId=d.id; document.getElementById("vehicleSaveButton").textContent="Changes Save करें"; document.getElementById("vehicleCancelEdit").hidden=false; document.getElementById("adminMessage").textContent="अब नाम या किराया बदलकर Changes Save करें।"; document.getElementById("vehicleForm").scrollIntoView({behavior:"smooth",block:"center"}); }); row.appendChild(edit); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===false?"Activate":"Deactivate"; b.addEventListener("click",async()=>{b.disabled=true; try { await d.ref.update({active:v.active===false}); document.getElementById("adminMessage").textContent="Vehicle status update ho gaya."; await loadAdminResources(); await loadBookingVehicles(); } catch(err) { document.getElementById("adminMessage").textContent="Vehicle status update nahi hua: "+err.message; b.disabled=false; }}); row.appendChild(b); vl.appendChild(row); });
       const ds=await bookingsDb.collection("users").where("role","==","driver").get(); dl.innerHTML="";
       if(ds.empty) dl.textContent="अभी Driver profile नहीं है।";
       ds.forEach(d=>{ const v=d.data(), row=document.createElement("p"); row.textContent=(v.name||v.email||d.id)+" | "+(v.phone||"")+" | "+(v.active===true?"Active":"Inactive"); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===true?"Deactivate":"Activate"; b.addEventListener("click",async()=>{b.disabled=true; try { await d.ref.update({active:v.active!==true}); document.getElementById("adminMessage").textContent="Driver status update ho gaya."; await loadAdminResources(); } catch(err) { document.getElementById("adminMessage").textContent="Driver status update nahi hua: "+err.message; b.disabled=false; }}); row.appendChild(b); dl.appendChild(row); });
     } catch(err) { vl.textContent="Vehicle/Driver data load नहीं हुआ: "+err.message; dl.textContent="Firebase Rules जाँचें: "+err.message; }
   }
+  function resetVehicleEditor() {
+    const form=document.getElementById("vehicleForm");
+    delete form.dataset.editId;
+    form.reset();
+    document.getElementById("vehicleRate").value="0";
+    document.getElementById("vehicleSaveButton").textContent="Vehicle Save करें";
+    document.getElementById("vehicleCancelEdit").hidden=true;
+  }
+  document.getElementById("vehicleCancelEdit").addEventListener("click",resetVehicleEditor);
   document.getElementById("vehicleForm").addEventListener("submit",async e=>{
     e.preventDefault(); try {
-      await bookingsDb.collection("vehicles").add({name:document.getElementById("vehicleName").value.trim(),type:document.getElementById("vehicleType").value,ratePerKm:Number(document.getElementById("vehicleRate").value),note:document.getElementById("vehicleNote").value.trim(),active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-      e.target.reset(); document.getElementById("vehicleRate").value="0"; document.getElementById("adminMessage").textContent="Vehicle save हो गया।"; await loadAdminResources();
-    } catch(err) { document.getElementById("adminMessage").textContent="Vehicle save नहीं हुआ: "+err.message; }
+      const form=e.target;
+      const vehicleData={name:document.getElementById("vehicleName").value.trim(),type:document.getElementById("vehicleType").value,ratePerKm:Number(document.getElementById("vehicleRate").value),note:document.getElementById("vehicleNote").value.trim()};
+      if(!vehicleData.name || !Number.isFinite(vehicleData.ratePerKm) || vehicleData.ratePerKm<0) throw new Error("Vehicle name और सही किराया भरें।");
+      const editId=form.dataset.editId;
+      if(editId) {
+        await bookingsDb.collection("vehicles").doc(editId).update(vehicleData);
+        document.getElementById("adminMessage").textContent="Vehicle और किराया update हो गया।";
+      } else {
+        await bookingsDb.collection("vehicles").add({...vehicleData,active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        document.getElementById("adminMessage").textContent="Vehicle save हो गया।";
+      }
+      resetVehicleEditor(); await loadAdminResources(); await loadBookingVehicles();
+    } catch(err) { document.getElementById("adminMessage").textContent="Vehicle save/update नहीं हुआ: "+err.message; }
   });
   document.getElementById("driverProfileForm").addEventListener("submit",async e=>{
     e.preventDefault(); try {
