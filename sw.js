@@ -1,4 +1,4 @@
-const CACHE_NAME = "yaha-travels-v1";
+const CACHE_NAME = "yaha-travels-v2";
 const APP_FILES = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", event => {
