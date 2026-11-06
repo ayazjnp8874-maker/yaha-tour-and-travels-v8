@@ -422,7 +422,11 @@
     if (!user || !bookingsDb) return;
     cb.textContent = "Bookings लोड हो रही हैं...";
     try {
-      const snap = await bookingsDb.collection("bookings_v8").where("customerUid", "==", user.uid).get();
+      const snap = await bookingsDb.collection("bookings_v8")
+        .where("customerUid", "==", user.uid)
+        .orderBy("createdAt", "desc")
+        .limit(50)
+        .get();
       if (snap.empty) { cb.textContent = "अभी कोई booking नहीं है।"; return; }
       cb.innerHTML = "";
       snap.forEach(doc => {
