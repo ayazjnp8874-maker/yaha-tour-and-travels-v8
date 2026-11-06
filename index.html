@@ -588,7 +588,7 @@
           const d = driverDoc.data();
           const option = document.createElement("option");
           option.value = driverDoc.id;
-          option.textContent = (d.name || d.email || "Driver") + (d.phone ? " - " + d.phone : "");
+          option.textContent = (d.name || d.email || "Driver") + (d.phone ? " - " + d.phone : "") + " [UID: " + driverDoc.id + "]";
           option.dataset.name = d.name || d.email || "Driver";
           if (b.driverUid === driverDoc.id) option.selected = true;
           driverSelect.appendChild(option);
@@ -612,7 +612,7 @@
               assignedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             status.value = "assigned";
-            assignmentMessage.textContent = "✓ Driver booking में assign हो गया: " + chosen.dataset.name;
+            assignmentMessage.textContent = "✓ Driver booking में assign हो गया: " + chosen.dataset.name + " | Assigned UID: " + driverSelect.value;
             adminMessage.textContent = assignmentMessage.textContent;
           } catch (assignError) {
             assignmentMessage.textContent = "Driver assign नहीं हुआ: " + assignError.message;
@@ -778,7 +778,10 @@
     try {
       const snap = await bookingsDb.collection("bookings_v8")
         .where("driverUid", "==", user.uid).get();
-      if (snap.empty) { driverBookings.textContent = "अभी कोई booking assign नहीं हुई है।"; return; }
+      if (snap.empty) {
+        driverBookings.textContent = "अभी कोई booking assign नहीं हुई है।\\n\\nतकनीकी जाँच: आपका Login UID = " + user.uid + "\\nAdmin को इसी UID पर booking assign करनी होगी।";
+        return;
+      }
       driverBookings.innerHTML = "";
       snap.forEach((doc) => {
         const b = doc.data();
