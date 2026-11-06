@@ -619,6 +619,12 @@
           "\nFare: " + (b.estimatedFare || "") +
           "\nStatus: " + (b.status || "new");
         card.appendChild(details);
+        if (b.customerCancelRequested === true) {
+          const cancelNotice = document.createElement("p");
+          cancelNotice.textContent = "⚠ Customer ने इस booking को cancel करने का अनुरोध किया है।";
+          cancelNotice.style.cssText = "background:#fff0d5;padding:8px;border-radius:6px;font-weight:700;";
+          card.appendChild(cancelNotice);
+        }
         const status = document.createElement("select");
         ["new", "accepted", "assigned", "started", "completed", "cancelled"].forEach((value) => {
           const option = document.createElement("option");
