@@ -424,12 +424,15 @@
     try {
       const snap = await bookingsDb.collection("bookings_v8")
         .where("customerUid", "==", user.uid)
-        .orderBy("createdAt", "desc")
-        .limit(50)
         .get();
       if (snap.empty) { cb.textContent = "अभी कोई booking नहीं है।"; return; }
       cb.innerHTML = "";
-      snap.forEach(doc => {
+      const newestFirst = snap.docs.sort((a, b) => {
+        const aTime = a.data().createdAt && a.data().createdAt.toMillis ? a.data().createdAt.toMillis() : 0;
+        const bTime = b.data().createdAt && b.data().createdAt.toMillis ? b.data().createdAt.toMillis() : 0;
+        return bTime - aTime;
+      }).slice(0, 50);
+      newestFirst.forEach(doc => {
         const b = doc.data(), item = document.createElement("article");
         item.style.cssText = "border:1px solid #ddd;padding:12px;margin:10px 0;border-radius:8px";
         const h = document.createElement("strong"), p = document.createElement("p");
