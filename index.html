@@ -866,9 +866,10 @@
       const snap=await bookingsDb.collection("users").doc(cred.user.uid).get();
       if(!snap.exists || snap.data().active!==true) throw new Error("इस अकाउंट को सक्रिय अनुमति नहीं मिली है।");
       unifiedUser=cred.user; unifiedProfile=snap.data();
-      const roles=Array.isArray(unifiedProfile.roles)?unifiedProfile.roles.slice():[];
-      if(unifiedProfile.role && !roles.includes(unifiedProfile.role)) roles.push(unifiedProfile.role);
+      const roles=Array.isArray(unifiedProfile.roles)?unifiedProfile.roles.map(r=>String(r).trim().toLowerCase()).filter(Boolean):[];
+      if(unifiedProfile.role && !roles.includes(String(unifiedProfile.role).trim().toLowerCase())) roles.push(String(unifiedProfile.role).trim().toLowerCase());
       const allowed=[["customer","Customer Dashboard"],["driver","Driver Dashboard"],["admin","Admin Dashboard"]].filter(x=>roles.includes(x[0]));
+      console.log("YAHA V8 roles read from Firestore:", roles);
       if(!allowed.length) throw new Error("इस अकाउंट के लिए कोई Dashboard अनुमति नहीं है।");
       unifiedForm.hidden=true; unifiedRoles.hidden=false;
       document.getElementById("unifiedWelcome").textContent="Login: "+cred.user.email;
