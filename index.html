@@ -565,9 +565,13 @@
         const assignButton = document.createElement("button");
         assignButton.type = "button";
         assignButton.textContent = "Driver Assign करें";
+        const assignmentMessage = document.createElement("p");
+        assignmentMessage.setAttribute("role", "status");
+        assignmentMessage.style.cssText = "margin:8px 0;font-weight:600;";
         assignButton.addEventListener("click", async () => {
           if (!driverSelect.value) { alert("पहले Driver चुनें।"); return; }
           assignButton.disabled = true;
+          assignmentMessage.textContent = "Driver assign हो रहा है...";
           try {
             const chosen = driverSelect.options[driverSelect.selectedIndex];
             await doc.ref.update({
@@ -576,15 +580,17 @@
               status: "assigned",
               assignedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            adminMessage.textContent = "Driver booking में assign हो गया।";
-            await loadAdminBookings();
-      await loadAdminResources();
+            status.value = "assigned";
+            assignmentMessage.textContent = "✓ Driver booking में assign हो गया: " + chosen.dataset.name;
+            adminMessage.textContent = assignmentMessage.textContent;
           } catch (assignError) {
-            adminMessage.textContent = "Driver assign नहीं हुआ: " + assignError.message;
+            assignmentMessage.textContent = "Driver assign नहीं हुआ: " + assignError.message;
+            adminMessage.textContent = assignmentMessage.textContent;
           } finally { assignButton.disabled = false; }
         });
         assignment.appendChild(driverSelect);
         assignment.appendChild(assignButton);
+        assignment.appendChild(assignmentMessage);
         card.appendChild(assignment);
         adminBookings.appendChild(card);
       });
