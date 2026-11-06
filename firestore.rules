@@ -48,6 +48,12 @@ service cloud.firestore {
         || (signedIn() && resource.data.customerUid == request.auth.uid)
         || (isActiveDriver() && resource.data.driverUid == request.auth.uid);
       allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.customerUid == request.auth.uid
+          && resource.data.status in ['new','assigned']
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['customerCancelRequested','customerCancelRequestedAt'])
+          && request.resource.data.customerCancelRequested == true)
         || (isActiveDriver()
           && resource.data.driverUid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys()
