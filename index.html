@@ -668,25 +668,38 @@
     adminMessage.textContent = "Logout ho gaya.";
   });
 
-  // Load active admin-managed vehicles into the customer booking form
+  // Load admin-managed vehicles while always retaining the standard booking choices.
   async function loadBookingVehicles() {
     const select = document.getElementById("vehicle");
-    if (!select || !bookingsDb) return;
-    try {
-      const snap = await bookingsDb.collection("vehicles").where("active", "==", true).get();
-      if (snap.empty) return; // Keep Ertiga, Dzire and Bike defaults until admin adds vehicles.
-      select.innerHTML = '<option value="">Vehicle चुनें</option>';
-      snap.forEach(doc => {
-        const v = doc.data();
-        const option = document.createElement("option");
-        option.value = v.name || doc.id;
-        option.textContent = (v.name || "Vehicle") + " - " + (Number(v.ratePerKm) > 0 ? "₹" + v.ratePerKm + "/KM" : "किराया पूछें");
-        option.dataset.rate = String(Number(v.ratePerKm) || 0);
-        select.appendChild(option);
-      });
-    } catch (err) {
-      console.warn("Admin vehicle list unavailable; default choices remain.", err);
+    if (!select) return;
+    const standardVehicles = [
+      {name:"Ertiga", ratePerKm:14},
+      {name:"Dzire", ratePerKm:12},
+      {name:"Bike", ratePerKm:0}
+    ];
+    const vehiclesByName = new Map(standardVehicles.map(v => [v.name.toLowerCase(), v]));
+    if (bookingsDb) {
+      try {
+        const snap = await bookingsDb.collection("vehicles").where("active", "==", true).get();
+        snap.forEach(doc => {
+          const v = doc.data();
+          if (v.name) vehiclesByName.set(v.name.toLowerCase(), {
+            name:v.name,
+            ratePerKm:Number(v.ratePerKm) || 0
+          });
+        });
+      } catch (err) {
+        console.warn("Admin vehicle list unavailable; standard choices remain.", err);
+      }
     }
+    select.innerHTML = '<option value="">Vehicle चुनें</option>';
+    vehiclesByName.forEach(v => {
+      const option = document.createElement("option");
+      option.value = v.name;
+      option.textContent = v.name + " - " + (v.ratePerKm > 0 ? "₹" + v.ratePerKm + "/KM" : "किराया पूछें");
+      option.dataset.rate = String(v.ratePerKm);
+      select.appendChild(option);
+    });
   }
   loadBookingVehicles();
 
