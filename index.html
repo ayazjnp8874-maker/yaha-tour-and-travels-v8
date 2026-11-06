@@ -882,7 +882,24 @@
           document.getElementById("driverPanel").hidden=true;
           if(role==="customer"){document.getElementById("customerPanel").hidden=false; await showCustomer(unifiedUser);}
           if(role==="driver"){document.getElementById("driverPanel").hidden=false; driverLoginForm.hidden=true; driverDashboard.hidden=false; document.getElementById("driverWelcome").textContent="Logged in: "+unifiedUser.email; await loadDriverBookings();}
-          if(role==="admin"){document.getElementById("adminPanel").hidden=false; adminLoginForm.hidden=true; adminDashboard.hidden=false; document.getElementById("adminWelcome").textContent="Logged in: "+unifiedUser.email; await loadAdminBookings(); await loadAdminResources();}
+          if(role==="admin"){
+            const panel=document.getElementById("adminPanel");
+            panel.hidden=false;
+            adminLoginForm.hidden=true;
+            adminDashboard.hidden=false;
+            document.getElementById("adminWelcome").textContent="Logged in: "+unifiedUser.email;
+            panel.scrollIntoView({behavior:"smooth",block:"start"});
+            unifiedMessage.textContent="Admin Dashboard खुल रहा है...";
+            try {
+              await loadAdminBookings();
+              await loadAdminResources();
+              unifiedMessage.textContent="Admin Dashboard खुल गया।";
+            } catch(err) {
+              console.error("Admin dashboard open error:",err);
+              unifiedMessage.textContent="Admin Dashboard खुल गया, लेकिन data load में समस्या: "+err.message;
+            }
+            return;
+          }
           unifiedMessage.textContent=label+" खुल गया।";
         });
         unifiedButtons.appendChild(btn);
