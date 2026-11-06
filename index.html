@@ -433,7 +433,7 @@
       const email = document.getElementById("customerRegisterEmail").value.trim();
       const password = document.getElementById("customerRegisterPassword").value;
       const c = await firebase.auth().createUserWithEmailAndPassword(email,password);
-      await bookingsDb.collection("users").doc(c.user.uid).set({name,phone,email,role:"customer",active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      await bookingsDb.collection("users").doc(c.user.uid).set({name,phone,email,role:"customer",roles:["customer"],active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
       cm.textContent = "Registration सफल हुआ।"; await showCustomer(c.user);
     } catch(err) { cm.textContent = "Registration नहीं हुआ: " + err.message; }
   });
@@ -444,7 +444,7 @@
       const password = document.getElementById("customerLoginPassword").value;
       const c = await firebase.auth().signInWithEmailAndPassword(email,password);
       const p = await bookingsDb.collection("users").doc(c.user.uid).get();
-      if (!p.exists || p.data().role !== "customer" || p.data().active !== true) { await firebase.auth().signOut(); throw new Error("यह active Customer account नहीं है।"); }
+      if (!p.exists || !((p.data().role === "customer") || (Array.isArray(p.data().roles) && p.data().roles.includes("customer"))) || p.data().active !== true) { await firebase.auth().signOut(); throw new Error("यह active Customer account नहीं है।"); }
       cm.textContent = "Login सफल हुआ।"; await showCustomer(c.user);
     } catch(err) { cm.textContent = "Login failed: " + err.message; }
   });
@@ -726,7 +726,7 @@
       const phone=document.getElementById("driverPhoneInput").value.trim(); if(!/^[0-9]{10}$/.test(phone)) throw new Error("10 अंकों का मोबाइल नंबर लिखें।");
       const uid=document.getElementById("driverUidInput").value.trim();
       const existing=await bookingsDb.collection("users").doc(uid).get();
-      const profile={name:document.getElementById("driverNameInput").value.trim(),email:document.getElementById("driverEmailInput").value.trim(),phone:phone,role:"driver",active:existing.exists?existing.data().active!==false:true};
+      const existingRoles=existing.exists && Array.isArray(existing.data().roles) ? existing.data().roles : (existing.exists && existing.data().role ? [existing.data().role] : []);\n      const profile={name:document.getElementById("driverNameInput").value.trim(),email:document.getElementById("driverEmailInput").value.trim(),phone:phone,role:"driver",roles:Array.from(new Set([...existingRoles,"driver","customer"])),active:existing.exists?existing.data().active!==false:true};
       if(!existing.exists) profile.createdAt=firebase.firestore.FieldValue.serverTimestamp();
       await bookingsDb.collection("users").doc(uid).set(profile,{merge:true});
       e.target.reset(); document.getElementById("adminMessage").textContent="Driver profile save/update हो गई।"; await loadAdminResources();
