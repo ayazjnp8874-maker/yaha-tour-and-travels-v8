@@ -726,7 +726,8 @@
       const phone=document.getElementById("driverPhoneInput").value.trim(); if(!/^[0-9]{10}$/.test(phone)) throw new Error("10 अंकों का मोबाइल नंबर लिखें।");
       const uid=document.getElementById("driverUidInput").value.trim();
       const existing=await bookingsDb.collection("users").doc(uid).get();
-      const existingRoles=existing.exists && Array.isArray(existing.data().roles) ? existing.data().roles : (existing.exists && existing.data().role ? [existing.data().role] : []);\n      const profile={name:document.getElementById("driverNameInput").value.trim(),email:document.getElementById("driverEmailInput").value.trim(),phone:phone,role:"driver",roles:Array.from(new Set([...existingRoles,"driver","customer"])),active:existing.exists?existing.data().active!==false:true};
+      const existingRoles=existing.exists && Array.isArray(existing.data().roles) ? existing.data().roles : (existing.exists && existing.data().role ? [existing.data().role] : []);
+      const profile={name:document.getElementById("driverNameInput").value.trim(),email:document.getElementById("driverEmailInput").value.trim(),phone:phone,role:existing.exists && existing.data().role === "admin" ? "admin" : "driver",roles:Array.from(new Set([...existingRoles,"driver","customer"])),active:existing.exists?existing.data().active!==false:true};
       if(!existing.exists) profile.createdAt=firebase.firestore.FieldValue.serverTimestamp();
       await bookingsDb.collection("users").doc(uid).set(profile,{merge:true});
       e.target.reset(); document.getElementById("adminMessage").textContent="Driver profile save/update हो गई।"; await loadAdminResources();
@@ -802,7 +803,7 @@
       const password = document.getElementById("driverPassword").value;
       const credential = await firebase.auth().signInWithEmailAndPassword(email, password);
       const userDoc = await bookingsDb.collection("users").doc(credential.user.uid).get();
-      if (!userDoc.exists || userDoc.data().role !== "driver" || userDoc.data().active !== true) {
+      if (!userDoc.exists || !(userDoc.data().role === "driver" || (Array.isArray(userDoc.data().roles) && userDoc.data().roles.includes("driver"))) || userDoc.data().active !== true) {
         await firebase.auth().signOut();
         throw new Error("इस account को active Driver access नहीं मिला।");
       }
