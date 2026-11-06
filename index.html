@@ -605,14 +605,20 @@
           assignmentMessage.textContent = "Driver assign हो रहा है...";
           try {
             const chosen = driverSelect.options[driverSelect.selectedIndex];
-            await doc.ref.update({
+            const alreadyAssignedToThisDriver = b.driverUid === driverSelect.value;
+            const assignmentUpdate = {
               driverUid: driverSelect.value,
-              driverName: chosen.dataset.name,
-              status: "assigned",
-              assignedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            status.value = "assigned";
-            assignmentMessage.textContent = "✓ Driver booking में assign हो गया: " + chosen.dataset.name + " | Assigned UID: " + driverSelect.value;
+              driverName: chosen.dataset.name
+            };
+            if (!alreadyAssignedToThisDriver) {
+              assignmentUpdate.status = "assigned";
+              assignmentUpdate.assignedAt = firebase.firestore.FieldValue.serverTimestamp();
+            }
+            await doc.ref.update(assignmentUpdate);
+            if (!alreadyAssignedToThisDriver) status.value = "assigned";
+            assignmentMessage.textContent = alreadyAssignedToThisDriver
+              ? "✓ यही Driver पहले से assigned है। Booking का मौजूदा status सुरक्षित रखा गया: " + (b.status || "new")
+              : "✓ Driver booking में assign हो गया: " + chosen.dataset.name + " | Assigned UID: " + driverSelect.value;
             adminMessage.textContent = assignmentMessage.textContent;
           } catch (assignError) {
             assignmentMessage.textContent = "Driver assign नहीं हुआ: " + assignError.message;
