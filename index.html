@@ -737,16 +737,28 @@
         });
         const update = document.createElement("button");
         update.type = "button"; update.textContent = "Trip Status Update";
+        const statusResult = document.createElement("p");
+        statusResult.setAttribute("role", "status");
+        statusResult.style.cssText = "font-weight:600;margin:8px 0;";
         update.addEventListener("click", async () => {
           update.disabled = true;
+          status.disabled = true;
+          statusResult.textContent = "Trip status save हो रहा है...";
           try {
             await doc.ref.update({status: status.value, driverUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()});
+            title.textContent = (b.bookingId || doc.id) + " — " + status.value;
+            statusResult.textContent = "✓ Trip status update हो गया: " + status.value;
             driverMessage.textContent = "Trip status update हो गया।";
-            await loadDriverBookings();
-          } catch (err) { driverMessage.textContent = "Update नहीं हुआ: " + err.message; }
-          finally { update.disabled = false; }
+            b.status = status.value;
+          } catch (err) {
+            statusResult.textContent = "Update नहीं हुआ: " + err.message;
+            driverMessage.textContent = "Trip status update नहीं हुआ।";
+          } finally {
+            update.disabled = false;
+            status.disabled = false;
+          }
         });
-        card.append(title, detail, status, update);
+        card.append(title, detail, status, update, statusResult);
         driverBookings.appendChild(card);
       });
     } catch (err) { driverBookings.textContent = "Bookings load नहीं हुईं: " + err.message; }
