@@ -158,7 +158,7 @@
   <p id="unifiedMessage" class="note" aria-live="polite"></p>
 </section>
 
-<section class="card" id="customerPanel">
+<section class="card" id="customerPanel" hidden>
 <h2>Customer Login / Registration</h2>
 <p class="note">Account बनाकर अपनी bookings देख सकते हैं। बिना account भी booking कर सकते हैं।</p>
 <form id="customerRegisterForm">
@@ -223,7 +223,7 @@
   </section>
 
   
-  <section class="card" id="adminPanel">
+  <section class="card" id="adminPanel" hidden>
     <h2>Admin Login</h2>
     <p class="note">यह हिस्सा केवल अधिकृत Admin के लिए है।</p>
     <form id="adminLoginForm">
@@ -261,7 +261,7 @@
     <p id="adminMessage" class="note" aria-live="polite"></p>
   </section>
 
-<section class="card" id="driverPanel">
+<section class="card" id="driverPanel" hidden>
     <h2>Driver Login</h2>
     <p class="note">केवल Admin द्वारा सक्रिय किए गए Driver ही लॉगिन कर सकते हैं।</p>
     <form id="driverLoginForm">
@@ -766,6 +766,7 @@
   });
   // Driver authentication and assigned-trip dashboard
   const driverLoginForm = document.getElementById("driverLoginForm");
+  driverLoginForm.hidden = true; // V8 uses the single unified login; never show legacy driver login.
   const driverDashboard = document.getElementById("driverDashboard");
   const driverMessage = document.getElementById("driverMessage");
   const driverBookings = document.getElementById("driverBookings");
