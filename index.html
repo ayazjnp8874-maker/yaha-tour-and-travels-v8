@@ -16,7 +16,57 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <title>YAHA TOUR AND TRAVELS | Car &amp; Bike Booking in Jaunpur</title>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"TravelAgency","name":"YAHA TOUR AND TRAVELS","url":"https://ayazjnp8874-maker.github.io/yaha-tour-and-travels-v8/","address":{"@type":"PostalAddress","streetAddress":"YAHA TOUR AND TRAVELS, PP67+V2M, Zafarabad Rd, Ahamadpur","addressLocality":"Sultanpur","addressRegion":"Uttar Pradesh","postalCode":"222180","addressCountry":"IN"},"areaServed":{"@type":"City","name":"Jaunpur"},"telephone":["+918874547741","+917068604325"],"description":"Car and bike booking service for local and outstation travel."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TravelAgency","name":"YAHA TOUR AND TRAVELS","url":"https://ayazjnp8874-maker.github.io/yaha-tour-and-travels-v8/","address":{"@type":"PostalAddress","streetAddress":"YAHA TOUR AND TRAVELS, PP67+V2M, Zafarabad Rd, Ahamadpur","addressLocality":"Sultanpur","addressRegion":"Uttar Pradesh","postalCode":"222180","addressCountry":"IN"},"areaServed":{"@type":"City","name":"Jaunpur"},"telephone":["+918874547741","+917068604325"],"description":"Car and bike booking service for local and outstation travel."}
+  // Shared sign-in for all authorized roles on website and Android WebView.
+  const unifiedForm=document.getElementById("unifiedLoginForm");
+  const unifiedRoles=document.getElementById("unifiedRoles");
+  const unifiedButtons=document.getElementById("unifiedRoleButtons");
+  const unifiedMessage=document.getElementById("unifiedMessage");
+  let unifiedUser=null, unifiedProfile=null;
+  unifiedForm.addEventListener("submit",async ev=>{
+    ev.preventDefault(); unifiedMessage.textContent="Login हो रहा है...";
+    try {
+      const email=document.getElementById("unifiedEmail").value.trim();
+      const password=document.getElementById("unifiedPassword").value;
+      const cred=await firebase.auth().signInWithEmailAndPassword(email,password);
+      const snap=await bookingsDb.collection("users").doc(cred.user.uid).get();
+      if(!snap.exists || snap.data().active!==true) throw new Error("इस अकाउंट को सक्रिय अनुमति नहीं मिली है।");
+      unifiedUser=cred.user; unifiedProfile=snap.data();
+      const roles=Array.isArray(unifiedProfile.roles)?unifiedProfile.roles.slice():[];
+      if(unifiedProfile.role && !roles.includes(unifiedProfile.role)) roles.push(unifiedProfile.role);
+      const allowed=[["customer","Customer Dashboard"],["driver","Driver Dashboard"],["admin","Admin Dashboard"]].filter(x=>roles.includes(x[0]));
+      if(!allowed.length) throw new Error("इस अकाउंट के लिए कोई Dashboard अनुमति नहीं है।");
+      unifiedForm.hidden=true; unifiedRoles.hidden=false;
+      document.getElementById("unifiedWelcome").textContent="Login: "+cred.user.email;
+      unifiedButtons.innerHTML="";
+      allowed.forEach(([role,label])=>{
+        const btn=document.createElement("button"); btn.type="button"; btn.textContent=label;
+        btn.addEventListener("click",async()=>{
+          document.getElementById("customerPanel").hidden=true;
+          document.getElementById("adminPanel").hidden=true;
+          document.getElementById("driverPanel").hidden=true;
+          if(role==="customer"){document.getElementById("customerPanel").hidden=false; await showCustomer(unifiedUser);}
+          if(role==="driver"){document.getElementById("driverPanel").hidden=false; driverLoginForm.hidden=true; driverDashboard.hidden=false; document.getElementById("driverWelcome").textContent="Logged in: "+unifiedUser.email; await loadDriverBookings();}
+          if(role==="admin"){document.getElementById("adminPanel").hidden=false; adminLoginForm.hidden=true; adminDashboard.hidden=false; document.getElementById("adminWelcome").textContent="Logged in: "+unifiedUser.email; await loadAdminBookings(); await loadAdminResources();}
+          unifiedMessage.textContent=label+" खुल गया।";
+        });
+        unifiedButtons.appendChild(btn);
+      });
+      unifiedMessage.textContent="Login सफल। उपलब्ध Dashboard चुनें।";
+      document.getElementById("customerPanel").hidden=true;
+      document.getElementById("adminPanel").hidden=true;
+      document.getElementById("driverPanel").hidden=true;
+    } catch(err){ if(firebase.auth().currentUser) await firebase.auth().signOut(); unifiedMessage.textContent="Login failed: "+err.message; }
+  });
+  document.getElementById("unifiedLogout").addEventListener("click",async()=>{
+    await firebase.auth().signOut(); unifiedUser=null; unifiedProfile=null;
+    unifiedRoles.hidden=true; unifiedForm.hidden=false; unifiedMessage.textContent="Logout हो गया।";
+    document.getElementById("customerPanel").hidden=false;
+    document.getElementById("adminPanel").hidden=false;
+    document.getElementById("driverPanel").hidden=false;
+  });
+
+</script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -141,6 +191,21 @@
     </div>
     <p class="note">* अंतिम किराया दूरी, यात्रा और उपलब्धता के अनुसार कन्फर्म किया जाएगा।</p>
   </section>
+
+<section class="card" id="unifiedLoginPanel">
+  <h2>एक Login – तीन Dashboard</h2>
+  <form id="unifiedLoginForm">
+    <label for="unifiedEmail">एक ही Gmail</label><input id="unifiedEmail" type="email" required>
+    <label for="unifiedPassword">Password</label><input id="unifiedPassword" type="password" required>
+    <button type="submit">Login करें</button>
+  </form>
+  <div id="unifiedRoles" hidden>
+    <p id="unifiedWelcome"></p><p>अपना Dashboard चुनें:</p>
+    <div id="unifiedRoleButtons"></div>
+    <button type="button" id="unifiedLogout">Logout</button>
+  </div>
+  <p id="unifiedMessage" class="note" aria-live="polite"></p>
+</section>
 
 <section class="card" id="customerPanel">
 <h2>Customer Login / Registration</h2>
