@@ -832,28 +832,19 @@
 
   driverLoginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    driverMessage.textContent = "Login हो रहा है...";
-    try {
-      const email = document.getElementById("driverEmail").value.trim();
-      const password = document.getElementById("driverPassword").value;
-      const credential = await firebase.auth().signInWithEmailAndPassword(email, password);
-      const userDoc = await bookingsDb.collection("users").doc(credential.user.uid).get();
-      if (!userDoc.exists || !(userDoc.data().role === "driver" || (Array.isArray(userDoc.data().roles) && userDoc.data().roles.includes("driver"))) || userDoc.data().active !== true) {
-        await firebase.auth().signOut();
-        throw new Error("इस account को active Driver access नहीं मिला।");
-      }
-      driverLoginForm.hidden = true;
-      driverDashboard.hidden = false;
-      document.getElementById("driverWelcome").textContent = "Logged in: " + credential.user.email;
-      driverMessage.textContent = "Driver login successful.";
-      await loadDriverBookings();
-    } catch (err) { driverMessage.textContent = "Login failed: " + err.message; }
+    driverLoginForm.hidden = true;
+    driverMessage.textContent = "पुराना Driver Login बंद है। ऊपर Unified Login से लॉगिन करके Driver Dashboard चुनें।";
+    document.getElementById("unifiedForm").scrollIntoView({behavior:"smooth",block:"center"});
   });
   document.getElementById("refreshDriverBookings").addEventListener("click", loadDriverBookings);
   document.getElementById("driverLogout").addEventListener("click", async () => {
     await firebase.auth().signOut();
-    driverDashboard.hidden = true; driverLoginForm.hidden = false;
-    driverBookings.textContent = ""; driverMessage.textContent = "Logout हो गया।";
+    driverDashboard.hidden = true; driverLoginForm.hidden = true;
+    document.getElementById("driverPanel").hidden = true;
+    document.getElementById("unifiedRoles").hidden = true;
+    document.getElementById("unifiedForm").hidden = false;
+    driverBookings.textContent = ""; driverMessage.textContent = "Logout हो गया। अब Unified Login करें।";
+    document.getElementById("unifiedForm").scrollIntoView({behavior:"smooth",block:"center"});
   });
 
   function contactWhatsAppSecond() {
@@ -932,9 +923,9 @@
   document.getElementById("unifiedLogout").addEventListener("click",async()=>{
     await firebase.auth().signOut(); unifiedUser=null; unifiedProfile=null;
     unifiedRoles.hidden=true; unifiedForm.hidden=false; unifiedMessage.textContent="Logout हो गया।";
-    document.getElementById("customerPanel").hidden=false;
-    document.getElementById("adminPanel").hidden=false;
-    document.getElementById("driverPanel").hidden=false;
+    document.getElementById("customerPanel").hidden=true;
+    document.getElementById("adminPanel").hidden=true;
+    document.getElementById("driverPanel").hidden=true;
   });
 </script>
 
