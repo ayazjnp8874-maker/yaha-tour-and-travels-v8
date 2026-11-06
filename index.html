@@ -559,7 +559,7 @@
           "\nStatus: " + (b.status || "new");
         card.appendChild(details);
         const status = document.createElement("select");
-        ["new", "accepted", "assigned", "completed", "cancelled"].forEach((value) => {
+        ["new", "accepted", "assigned", "started", "completed", "cancelled"].forEach((value) => {
           const option = document.createElement("option");
           option.value = value;
           option.textContent = value;
