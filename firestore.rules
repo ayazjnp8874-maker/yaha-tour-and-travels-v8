@@ -31,7 +31,7 @@ service cloud.firestore {
     }
     match /bookings_v8/{bookingId} {
       allow create: if request.resource.data.keys().hasOnly([
-          'bookingId','name','mobile','vehicle','pickup','destination','travelDate',
+          'bookingId','name','mobile','vehicle','pickup','pickupCity','destination','travelDate',
           'travelTime','distanceKm','fareType','fareTypeLabel','extraDetails','estimatedFare','estimatedFareAmount',
           'paymentOption','paymentOptionLabel','paymentAmountDue','paymentStatus','paymentUpiId',
           'status','appVersion','customerUid','customerEmail','createdAt'
@@ -40,6 +40,7 @@ service cloud.firestore {
         && request.resource.data.mobile is string
         && request.resource.data.vehicle is string
         && request.resource.data.pickup is string
+        && request.resource.data.pickupCity == 'Jaunpur'
         && request.resource.data.destination is string
         && request.resource.data.fareType in ['per_km','fixed']
         && request.resource.data.fareTypeLabel is string
