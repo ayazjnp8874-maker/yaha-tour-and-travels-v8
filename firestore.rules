@@ -32,14 +32,23 @@ service cloud.firestore {
     match /bookings_v8/{bookingId} {
       allow create: if request.resource.data.keys().hasOnly([
           'bookingId','name','mobile','vehicle','pickup','destination','travelDate',
-          'travelTime','distanceKm','extraDetails','estimatedFare','status','appVersion',
-          'customerUid','customerEmail','createdAt'
+          'travelTime','distanceKm','extraDetails','estimatedFare','estimatedFareAmount',
+          'paymentOption','paymentOptionLabel','paymentAmountDue','paymentStatus','paymentUpiId',
+          'status','appVersion','customerUid','customerEmail','createdAt'
         ])
         && request.resource.data.name is string
         && request.resource.data.mobile is string
         && request.resource.data.vehicle is string
         && request.resource.data.pickup is string
         && request.resource.data.destination is string
+        && request.resource.data.estimatedFare is string
+        && request.resource.data.estimatedFareAmount == null
+        && request.resource.data.paymentOption in ['full','advance']
+        && request.resource.data.paymentOptionLabel is string
+        && request.resource.data.paymentAmountDue == null
+        && request.resource.data.paymentStatus == 'unpaid'
+        && request.resource.data.paymentUpiId is string
+        && request.resource.data.createdAt is timestamp
         && request.resource.data.status == 'new'
         && request.resource.data.appVersion == 'V8'
         && (request.resource.data.customerUid == null
