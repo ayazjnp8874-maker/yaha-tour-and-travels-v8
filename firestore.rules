@@ -34,7 +34,7 @@ service cloud.firestore {
           'bookingId','name','mobile','vehicle','pickup','pickupCity','destination','travelDate',
           'travelTime','distanceKm','fareType','fareTypeLabel','extraDetails','estimatedFare','estimatedFareAmount',
           'paymentOption','paymentOptionLabel','paymentAmountDue','paymentStatus','paymentUpiId',
-          'status','appVersion','customerUid','customerEmail','createdAt'
+          'status','fareQuoteStatus','appVersion','customerUid','customerEmail','createdAt'
         ])
         && request.resource.data.name is string
         && request.resource.data.mobile is string
@@ -52,7 +52,8 @@ service cloud.firestore {
         && request.resource.data.paymentStatus == 'unpaid'
         && request.resource.data.paymentUpiId is string
         && request.resource.data.createdAt is timestamp
-        && request.resource.data.status == 'new'
+        && request.resource.data.status in ['new','awaiting_fare']
+        && request.resource.data.fareQuoteStatus in ['requested','not_required']
         && request.resource.data.appVersion == 'V8'
         && (request.resource.data.customerUid == null
           || (signedIn() && request.resource.data.customerUid == request.auth.uid));
@@ -66,6 +67,14 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['customerCancelRequested','customerCancelRequestedAt'])
           && request.resource.data.customerCancelRequested == true)
+        || (signedIn()
+          && resource.data.customerUid == request.auth.uid
+          && resource.data.fareType == 'fixed'
+          && resource.data.fareQuoteStatus == 'offered'
+          && resource.data.status == 'awaiting_fare'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fareQuoteStatus','fareAcceptedAt','status'])
+          && request.resource.data.fareQuoteStatus == 'accepted'
+          && request.resource.data.status == 'new')
         || (isActiveDriver()
           && resource.data.driverUid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys()
