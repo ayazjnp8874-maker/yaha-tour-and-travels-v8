@@ -207,8 +207,9 @@
       <label for="distance">अनुमानित दूरी (KM) — KM वाले किराये के लिए</label>
       <input id="distance" type="number" min="1" placeholder="जैसे 100">
 
-      <label for="pickup">Pickup Location</label>
-      <input id="pickup" type="text" placeholder="कहां से जाना है?" required>
+      <label for="pickup">Pickup Location (केवल Jaunpur के अंदर)</label>
+      <input id="pickup" type="text" placeholder="Jaunpur के अंदर pickup की जगह लिखें" required>
+      <p class="note">महत्वपूर्ण: YAHA TOUR AND TRAVELS में Pickup केवल Jaunpur के अंदर से होगा। Jaunpur से Delhi, Mumbai या किसी भी शहर तक यात्रा की Booking कर सकते हैं। दूसरे शहर से Pickup उपलब्ध नहीं है।</p>
 
       <label for="destination">Destination</label>
       <input id="destination" type="text" placeholder="कहां जाना है?" required>
@@ -426,7 +427,7 @@
       "Mobile: " + mobile + "\n" +
       "Vehicle: " + vehicleLabel + "\n" +
       "Fare Type: " + fareTypeLabel + "\n" +
-      "Pickup: " + pickup + "\n" +
+      "Pickup (Jaunpur only): " + pickup + "\n" +
       "Destination: " + destination + "\n" +
       "Date: " + date + "\n" +
       "Time: " + time + "\n" +
@@ -449,6 +450,7 @@
           mobile: mobile,
           vehicle: vehicleLabel,
           pickup: pickup,
+          pickupCity: "Jaunpur",
           destination: destination,
           travelDate: date,
           travelTime: time,
