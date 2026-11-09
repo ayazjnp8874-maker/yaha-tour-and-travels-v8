@@ -188,24 +188,24 @@
         placeholder="10 अंकों का मोबाइल नंबर"
         pattern="[0-9]{10}" maxlength="10" required>
 
-      <label for="vehicle">Vehicle चुनें</label>
+      <label for="vehicle">Vehicle चुनें / Select Vehicle</label>
       <select id="vehicle" required>
-        <option value="">Vehicle चुनें</option>
+        <option value="">Vehicle चुनें / Select Vehicle</option>
         <option value="Ertiga" data-rate="14">Maruti Ertiga - ₹14/KM</option>
         <option value="Dzire" data-rate="12">Maruti Dzire - ₹12/KM</option>
         <option value="Auto Rickshaw" data-rate="0">Auto Rickshaw - किराया पूछें</option>
         <option value="Bike" data-rate="0">Bike - किराया पूछें</option>
       </select>
 
-      <label for="fareType">किराये का तरीका चुनें</label>
+      <label for="fareType">किराये का तरीका / Fare Type</label>
       <select id="fareType" required>
-        <option value="">किराये का तरीका चुनें</option>
-        <option value="per_km">KM के हिसाब से किराया</option>
-        <option value="fixed">मेरे द्वारा तय Fixed Rate</option>
+        <option value="">किराये का तरीका चुनें / Select Fare Type</option>
+        <option value="per_km">प्रति KM किराया / Per KM Rate</option>
+        <option value="fixed">YAHA द्वारा तय कुल किराया / Fixed Total Fare by YAHA</option>
       </select>
-      <p id="fareTypeNote" class="note">KM या Fixed Rate चुनें। Fixed Rate का कुल किराया YAHA TOUR AND TRAVELS तय करेगा।</p>
+      <p id="fareTypeNote" class="note">Per KM या Fixed Total Fare चुनें / Choose Per KM or Fixed Total Fare. Fixed fare YAHA TOUR AND TRAVELS बताएगा; customer मंजूर करेगा तभी booking confirm होगी / Customer must accept the quote before booking.</p>
 
-      <label for="distance">अनुमानित दूरी (KM) — KM वाले किराये के लिए</label>
+      <label for="distance">अनुमानित दूरी (KM) / Approx. Distance — Per KM bookings</label>
       <input id="distance" type="number" min="1" placeholder="जैसे 100">
 
       <label for="pickup">Pickup Location (केवल Jaunpur के अंदर)</label>
@@ -221,14 +221,14 @@
       <label for="travelTime">यात्रा का समय</label>
       <input id="travelTime" type="time" required>
 
-      <label for="paymentOption">पेमेंट विकल्प चुनें</label>
+      <label for="paymentOption">पेमेंट विकल्प / Payment Option</label>
       <select id="paymentOption" required>
         <option value="full">पूरा किराया (100%)</option>
         <option value="advance">20% एडवांस</option>
       </select>
       <p class="note">UPI: mohammadayazkhan73-1@oksbi — किराया कन्फर्म होने के बाद भुगतान करें। भुगतान की पुष्टि Admin द्वारा की जाएगी।</p>
 
-      <label for="message">अन्य जानकारी</label>
+      <label for="message">अन्य जानकारी / Additional Details</label>
       <textarea id="message" placeholder="अपनी कोई अतिरिक्त जानकारी लिखें"></textarea>
 
       <button type="submit">WhatsApp पर Booking भेजें</button>
@@ -367,13 +367,13 @@
     const note = document.getElementById("fareTypeNote");
     if (this.value === "per_km") {
       distanceInput.required = true;
-      note.textContent = "वाहन के प्रति KM रेट के आधार पर किराया तय होगा। अंतिम कुल किराया Admin कन्फर्म करेगा।";
+      note.textContent = "वाहन के Per KM rate से किराया निकलेगा / Fare uses the vehicle's per-KM rate. Admin will confirm the final total.";
     } else if (this.value === "fixed") {
       distanceInput.required = false;
-      note.textContent = "आपके लिए कुल Fixed Rate YAHA TOUR AND TRAVELS तय करेगा। दूरी देना वैकल्पिक है।";
+      note.textContent = "YAHA TOUR AND TRAVELS कुल Fixed Fare बताएगा / YAHA will enter the total fixed fare. Customer must accept it before booking. Distance is optional.";
     } else {
       distanceInput.required = false;
-      note.textContent = "KM या Fixed Rate चुनें। Fixed Rate का कुल किराया YAHA TOUR AND TRAVELS तय करेगा।";
+      note.textContent = "Per KM या Fixed Total Fare चुनें / Choose Per KM or Fixed Total Fare.";
     }
   });
 
@@ -524,7 +524,7 @@
         item.append(h,p);
         if (b.fareType === "fixed" && b.fareQuoteStatus === "offered" && b.customerUid === user.uid) {
           const quote = document.createElement("p");
-          quote.textContent = "आपका तय किराया: ₹" + Number(b.adminFareAmount || 0).toLocaleString("en-IN");
+          quote.textContent = "आपका तय किराया / Your quoted fare: ₹" + Number(b.adminFareAmount || 0).toLocaleString("en-IN");
           quote.style.cssText = "font-weight:700;background:#fff4c2;padding:10px;border-radius:6px;";
           const accept = document.createElement("button");
           accept.type = "button"; accept.textContent = "किराया मंजूर करें और Booking करें";
@@ -729,15 +729,15 @@
         const fareEditor = document.createElement("div");
         fareEditor.style.cssText = "margin:10px 0;padding:10px;background:#fff8dc;border-radius:8px;";
         const fareLabel = document.createElement("label");
-        fareLabel.textContent = "आपका तय किया हुआ कुल किराया (₹)";
+        fareLabel.textContent = "आपका तय किया हुआ कुल किराया (₹) / Your Fixed Total Fare (INR)";
         fareLabel.style.display = "block";
         const fareInput = document.createElement("input");
         fareInput.type = "number"; fareInput.min = "1"; fareInput.step = "1";
-        fareInput.placeholder = "किराया यहाँ भरें";
+        fareInput.placeholder = "यहाँ कुल किराया लिखें / Enter total fare here";
         fareInput.value = Number(b.adminFareAmount || b.estimatedFareAmount || 0) || "";
         fareInput.style.cssText = "width:100%;padding:10px;margin:6px 0;";
         const fareSave = document.createElement("button");
-        fareSave.type = "button"; fareSave.textContent = "किराया Save करें";
+        fareSave.type = "button"; fareSave.textContent = "किराया Save करें / Save Fare";
         fareSave.addEventListener("click", async () => {
           const amount = Math.round(Number(fareInput.value));
           if (!amount || amount < 1) { alert("कृपया सही किराया भरें।"); return; }
