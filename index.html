@@ -794,8 +794,11 @@
         const snap = await bookingsDb.collection("vehicles").where("active", "==", true).get();
         snap.forEach(doc => {
           const v = doc.data();
-          if (v.name) vehiclesByName.set(v.name.toLowerCase(), {
-            name:v.name,
+          if (!v.name) return;
+          // Ignore the accidental "Dzre" typo; keep the correct standard "Dzire" option.
+          if (v.name.trim().toLowerCase() === "dzre") return;
+          vehiclesByName.set(v.name.trim().toLowerCase(), {
+            name:v.name.trim(),
             ratePerKm:Number(v.ratePerKm) || 0
           });
         });
