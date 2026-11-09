@@ -196,18 +196,8 @@
         <option value="Bike" data-rate="0">Bike - किराया पूछें</option>
       </select>
 
-      <label for="fareMode">किराया तय करने का तरीका</label>
-      <select id="fareMode" required>
-        <option value="per_km">KM के हिसाब से</option>
-        <option value="fixed">Direct Fixed Fare (अपना कुल किराया लिखें)</option>
-      </select>
-
       <label for="distance">अनुमानित दूरी (KM) — KM वाले किराये के लिए</label>
       <input id="distance" type="number" min="1" placeholder="जैसे 100">
-
-      <label for="fixedFare">Direct कुल किराया (₹)</label>
-      <input id="fixedFare" type="number" min="1" step="1" placeholder="जैसे 2500">
-      <p class="note">Direct Fixed Fare चुनने पर यहाँ कुल किराया लिखें।</p>
 
       <label for="pickup">Pickup Location</label>
       <input id="pickup" type="text" placeholder="कहां से जाना है?" required>
@@ -357,8 +347,6 @@
     const date = document.getElementById("travelDate").value;
     const time = document.getElementById("travelTime").value;
     const distance = document.getElementById("distance").value;
-    const fareMode = document.getElementById("fareMode").value;
-    const fixedFareInput = document.getElementById("fixedFare").value;
     const extra = document.getElementById("message").value.trim();
     const paymentOption = document.getElementById("paymentOption").value;
 
@@ -371,22 +359,11 @@
     const rate = Number(selectedVehicle && selectedVehicle.dataset.rate || 0);
     const vehicleLabel = selectedVehicle ? selectedVehicle.textContent : vehicle;
 
-    let fareAmount = null;
-    let estimate = "किराया टीम से पूछें";
-    if (fareMode === "fixed") {
-      if (!fixedFareInput || Number(fixedFareInput) <= 0) {
-        alert("कृपया Direct Fixed Fare में कुल किराया लिखें।");
-        return;
-      }
-      fareAmount = Math.round(Number(fixedFareInput));
-      estimate = "₹" + fareAmount + " (Direct Fixed Fare)";
-    } else if (rate > 0 && distance && Number(distance) > 0) {
-      fareAmount = rate * Number(distance);
-      estimate = "₹" + fareAmount + " (प्रति KM के हिसाब से अनुमानित)";
-    }
-    const paymentAmount = fareAmount === null ? null :
-      (paymentOption === "advance" ? Math.ceil(fareAmount * 0.20) : fareAmount);
-    const paymentLabel = paymentOption === "advance" ? "20% Advance" : "Full Payment";
+    // Final fare will be set by Admin after reviewing the trip.
+    const fareAmount = null;
+    const estimate = "किराया Admin द्वारा तय किया जाएगा";
+    const paymentAmount = null;
+    const paymentLabel = paymentOption === "advance" ? "20% Advance (किराया तय होने के बाद)" : "Full Payment (किराया तय होने के बाद)";
 
     const bookingId = "YTT-" + Date.now();
 
@@ -400,7 +377,6 @@
       "Destination: " + destination + "\n" +
       "Date: " + date + "\n" +
       "Time: " + time + "\n" +
-      "Fare Type: " + (fareMode === "fixed" ? "Direct Fixed Fare" : "Per KM") + "\n" +
       "Distance: " + (distance ? distance + " KM" : "Not provided") + "\n" +
       "Estimated Fare: " + estimate + "\n" +
       "Payment Option: " + paymentLabel + "\n" +
@@ -423,11 +399,9 @@
           travelDate: date,
           travelTime: time,
           distanceKm: distance && Number(distance) > 0 ? Number(distance) : null,
-          fareMode: fareMode,
-          fixedFareAmount: fareMode === "fixed" ? fareAmount : null,
           extraDetails: extra,
           estimatedFare: estimate,
-          estimatedFareAmount: fareAmount,
+          estimatedFareAmount: null,
           paymentOption: paymentOption,
           paymentOptionLabel: paymentLabel,
           paymentAmountDue: paymentAmount,
@@ -663,6 +637,40 @@
           "\nFare: " + (b.estimatedFare || "") +
           "\nStatus: " + (b.status || "new");
         card.appendChild(details);
+        const fareEditor = document.createElement("div");
+        fareEditor.style.cssText = "margin:10px 0;padding:10px;background:#fff8dc;border-radius:8px;";
+        const fareLabel = document.createElement("label");
+        fareLabel.textContent = "आपका तय किया हुआ कुल किराया (₹)";
+        fareLabel.style.display = "block";
+        const fareInput = document.createElement("input");
+        fareInput.type = "number"; fareInput.min = "1"; fareInput.step = "1";
+        fareInput.placeholder = "किराया यहाँ भरें";
+        fareInput.value = Number(b.adminFareAmount || b.estimatedFareAmount || 0) || "";
+        fareInput.style.cssText = "width:100%;padding:10px;margin:6px 0;";
+        const fareSave = document.createElement("button");
+        fareSave.type = "button"; fareSave.textContent = "किराया Save करें";
+        fareSave.addEventListener("click", async () => {
+          const amount = Math.round(Number(fareInput.value));
+          if (!amount || amount < 1) { alert("कृपया सही किराया भरें।"); return; }
+          fareSave.disabled = true;
+          try {
+            const due = b.paymentOption === "advance" ? Math.ceil(amount * 0.20) : amount;
+            await doc.ref.update({
+              adminFareAmount: amount,
+              estimatedFareAmount: amount,
+              estimatedFare: "₹" + amount + " (Admin द्वारा तय)",
+              paymentAmountDue: due,
+              fareSetAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            adminMessage.textContent = "आपका तय किया हुआ किराया Save हो गया।";
+            await loadAdminBookings();
+          } catch (err) {
+            alert("किराया Save नहीं हुआ: " + err.message);
+            fareSave.disabled = false;
+          }
+        });
+        fareEditor.append(fareLabel, fareInput, fareSave);
+        card.appendChild(fareEditor);
         if (b.customerCancelRequested === true) {
           const cancelNotice = document.createElement("p");
           cancelNotice.textContent = "⚠ Customer ने इस booking को cancel करने का अनुरोध किया है।";
