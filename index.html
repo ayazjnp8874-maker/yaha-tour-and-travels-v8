@@ -211,6 +211,13 @@
       <label for="distance">अनुमानित दूरी (KM)</label>
       <input id="distance" type="number" min="1" placeholder="जैसे 100">
 
+      <label for="paymentOption">पेमेंट विकल्प चुनें</label>
+      <select id="paymentOption" required>
+        <option value="full">पूरा किराया (100%)</option>
+        <option value="advance">20% एडवांस</option>
+      </select>
+      <p class="note">UPI: mohammadayazkhan73-1@oksbi — किराया कन्फर्म होने के बाद भुगतान करें। भुगतान की पुष्टि Admin द्वारा की जाएगी।</p>
+
       <label for="message">अन्य जानकारी</label>
       <textarea id="message" placeholder="अपनी कोई अतिरिक्त जानकारी लिखें"></textarea>
 
@@ -341,6 +348,7 @@
     const time = document.getElementById("travelTime").value;
     const distance = document.getElementById("distance").value;
     const extra = document.getElementById("message").value.trim();
+    const paymentOption = document.getElementById("paymentOption").value;
 
     if (!/^[0-9]{10}$/.test(mobile)) {
       alert("कृपया सही 10 अंकों का मोबाइल नंबर लिखें।");
@@ -351,10 +359,15 @@
     const rate = Number(selectedVehicle && selectedVehicle.dataset.rate || 0);
     const vehicleLabel = selectedVehicle ? selectedVehicle.textContent : vehicle;
 
+    let fareAmount = null;
     let estimate = "किराया टीम से पूछें";
     if (rate > 0 && distance && Number(distance) > 0) {
-      estimate = "₹" + (rate * Number(distance)) + " (अनुमानित)";
+      fareAmount = rate * Number(distance);
+      estimate = "₹" + fareAmount + " (अनुमानित)";
     }
+    const paymentAmount = fareAmount === null ? null :
+      (paymentOption === "advance" ? Math.ceil(fareAmount * 0.20) : fareAmount);
+    const paymentLabel = paymentOption === "advance" ? "20% Advance" : "Full Payment";
 
     const bookingId = "YTT-" + Date.now();
 
@@ -370,8 +383,11 @@
       "Time: " + time + "\n" +
       "Distance: " + (distance ? distance + " KM" : "Not provided") + "\n" +
       "Estimated Fare: " + estimate + "\n" +
+      "Payment Option: " + paymentLabel + "\n" +
+      "Payment Amount: " + (paymentAmount === null ? "Fare confirmation ke baad" : "₹" + paymentAmount) + "\n" +
+      "UPI ID: mohammadayazkhan73-1@oksbi\n" +
       "Other Details: " + (extra || "None") + "\n\n" +
-      "Please confirm my booking.";
+      "Please confirm my booking and payment amount.";
 
     // Save booking to Firestore first. WhatsApp will still open if cloud save fails.
     let cloudSaved = false;
@@ -389,6 +405,12 @@
           distanceKm: distance && Number(distance) > 0 ? Number(distance) : null,
           extraDetails: extra,
           estimatedFare: estimate,
+          estimatedFareAmount: fareAmount,
+          paymentOption: paymentOption,
+          paymentOptionLabel: paymentLabel,
+          paymentAmountDue: paymentAmount,
+          paymentStatus: "unpaid",
+          paymentUpiId: "mohammadayazkhan73-1@oksbi",
           status: "new",
           appVersion: "V8",
           customerUid: firebase.auth().currentUser ? firebase.auth().currentUser.uid : null,
