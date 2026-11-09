@@ -208,7 +208,8 @@
       <p id="vehicleFareNote" class="note" aria-live="polite">पहले वाहन चुनें / Please select a vehicle first.</p>
 
       <label for="distance">अनुमानित दूरी (KM) / Approx. Distance — Per KM bookings</label>
-      <input id="distance" type="number" min="1" placeholder="जैसे 100">
+      <input id="distance" type="number" min="1" step="1" inputmode="numeric" placeholder="जैसे 100">
+      <p id="fareEstimate" class="note" aria-live="polite" hidden></p>
 
       <label for="pickup">Pickup Location (केवल Jaunpur के अंदर)</label>
       <input id="pickup" type="text" placeholder="Jaunpur के अंदर pickup की जगह लिखें" required>
@@ -363,15 +364,28 @@
     const fareType = isCar ? fareSelect.value : (vehicle ? "fixed" : "");
     distanceInput.required = fareType === "per_km";
     distanceInput.disabled = fareType !== "per_km";
-    if (fareType === "per_km") {
-      const rate = Number(selected && selected.dataset.rate || 0);
-      note.textContent = "प्रति KM किराया / Per KM: ₹" + rate + " प्रति KM। दूरी भरें; अनुमानित किराया दूरी × रेट से निकलेगा। / Enter distance; estimated fare = distance × rate.";
-    } else if (fareType === "fixed") {
-      note.textContent = "फिक्स कुल किराया / Fixed Total Fare: YAHA Admin आपकी यात्रा देखकर कुल किराया तय करेगा। ग्राहक मंजूर करेगा तभी Booking आगे बढ़ेगी। / Admin sets the total fare; booking proceeds after customer accepts.";
-    } else if (isCar) {
-      note.textContent = "कृपया Fixed Fare या Per KM चुनें। / Please choose Fixed Fare or Per KM.";
+    const estimateBox = document.getElementById("fareEstimate");
+    if (fareType !== "per_km") {
+      distanceInput.value = "";
+      estimateBox.hidden = true;
+      estimateBox.textContent = "";
     } else {
+      const rate = Number(selected && selected.dataset.rate || 0);
+      const km = Number(distanceInput.value || 0);
+      note.textContent = "प्रति KM किराया / Per KM Rate: ₹" + rate + " प्रति KM.";
+      estimateBox.hidden = false;
+      estimateBox.textContent = km > 0
+        ? "अनुमानित किराया / Estimated Fare: ₹" + (km * rate).toLocaleString("en-IN") + " (" + km + " KM × ₹" + rate + "). अंतिम पुष्टि YAHA Admin करेगा। / Final confirmation by YAHA Admin."
+        : "दूरी भरते ही अनुमानित किराया दिखेगा। / Estimated fare will appear when you enter distance.";
+    }
+    if (fareType === "fixed") {
+      note.textContent = "फिक्स कुल किराया / Fixed Total Fare: YAHA Admin आपकी यात्रा देखकर कुल किराया तय करेगा। ग्राहक मंजूर करेगा तभी Booking आगे बढ़ेगी। / Admin sets the total fare; booking proceeds after customer accepts.";
+    } else if (!fareType && isCar) {
+      note.textContent = "कृपया Fixed Fare या Per KM चुनें। / Please choose Fixed Fare or Per KM.";
+    } else if (!vehicle) {
       note.textContent = "पहले वाहन चुनें / Please select a vehicle first.";
+    } else if (!isCar) {
+      note.textContent = "Auto Rickshaw और Bike के लिए केवल Fixed Fare है। / Auto Rickshaw and Bike use Fixed Fare only.";
     }
   }
   document.getElementById("vehicle").addEventListener("change", function() {
@@ -379,6 +393,7 @@
     applyVehicleFareOptions();
   });
   document.getElementById("fareType").addEventListener("change", applyVehicleFareOptions);
+  document.getElementById("distance").addEventListener("input", applyVehicleFareOptions);
   applyVehicleFareOptions();
 
   document.getElementById("bookingForm").addEventListener("submit", async function(e) {
@@ -423,8 +438,9 @@
 
     // Final payable fare is confirmed by Admin after reviewing the trip.
     const fareAmount = null;
+    const estimatedKmFare = fareType === "per_km" ? Math.round(Number(distance) * rate) : null;
     const estimate = fareType === "per_km"
-      ? "KM के हिसाब से; अंतिम किराया Admin कन्फर्म करेगा"
+      ? "₹" + estimatedKmFare.toLocaleString("en-IN") + " (लगभग; " + distance + " KM × ₹" + rate + "/KM)"
       : "Customer ने Fixed Rate चुना; कुल किराया Admin तय करेगा";
     const paymentAmount = null;
     const paymentLabel = paymentOption === "advance" ? "20% Advance (किराया तय होने के बाद)" : "Full Payment (किराया तय होने के बाद)";
@@ -470,7 +486,7 @@
           fareTypeLabel: fareTypeLabel,
           extraDetails: extra,
           estimatedFare: estimate,
-          estimatedFareAmount: null,
+          estimatedFareAmount: estimatedKmFare,
           paymentOption: paymentOption,
           paymentOptionLabel: paymentLabel,
           paymentAmountDue: paymentAmount,
