@@ -344,6 +344,22 @@
   const localToday = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
   document.getElementById("travelDate").min = localToday;
 
+  function applyVehicleFareOptions() {
+    const vehicleSelect = document.getElementById("vehicle");
+    const fareSelect = document.getElementById("fareType");
+    const isBike = vehicleSelect.value.toLowerCase() === "bike";
+    const perKmOption = fareSelect.querySelector('option[value="per_km"]');
+    if (perKmOption) perKmOption.hidden = isBike;
+    if (isBike) {
+      fareSelect.value = "fixed";
+      fareSelect.dispatchEvent(new Event("change"));
+    } else if (fareSelect.value === "fixed" && perKmOption) {
+      // Keep the user's choice when returning from Bike; do not auto-select per-KM.
+    }
+  }
+  document.getElementById("vehicle").addEventListener("change", applyVehicleFareOptions);
+  applyVehicleFareOptions();
+
   document.getElementById("fareType").addEventListener("change", function() {
     const distanceInput = document.getElementById("distance");
     const note = document.getElementById("fareTypeNote");
