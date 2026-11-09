@@ -392,6 +392,11 @@
     const extra = document.getElementById("message").value.trim();
     const paymentOption = document.getElementById("paymentOption").value;
 
+    if (fareType === "fixed" && !firebase.auth().currentUser) {
+      alert("Fixed Rate का किराया देखने और मंजूर करने के लिए पहले Customer Register या Login करें।");
+      document.getElementById("customerAccountArea").scrollIntoView({behavior:"smooth",block:"center"});
+      return;
+    }
     if (!/^[0-9]{10}$/.test(mobile)) {
       alert("कृपया सही 10 अंकों का मोबाइल नंबर लिखें।");
       return;
