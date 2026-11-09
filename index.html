@@ -208,8 +208,18 @@
       <label for="travelTime">यात्रा का समय</label>
       <input id="travelTime" type="time" required>
 
-      <label for="distance">अनुमानित दूरी (KM)</label>
+      <label for="fareMode">किराया तय करने का तरीका</label>
+      <select id="fareMode" required>
+        <option value="per_km">KM के हिसाब से</option>
+        <option value="fixed">Direct Fixed Fare (अपना कुल किराया लिखें)</option>
+      </select>
+
+      <label for="distance">अनुमानित दूरी (KM) — KM वाले किराये के लिए</label>
       <input id="distance" type="number" min="1" placeholder="जैसे 100">
+
+      <label for="fixedFare">Direct कुल किराया (₹)</label>
+      <input id="fixedFare" type="number" min="1" step="1" placeholder="जैसे 2500">
+      <p class="note">Direct Fixed Fare चुनने पर यहाँ कुल किराया लिखें।</p>
 
       <label for="paymentOption">पेमेंट विकल्प चुनें</label>
       <select id="paymentOption" required>
@@ -347,6 +357,8 @@
     const date = document.getElementById("travelDate").value;
     const time = document.getElementById("travelTime").value;
     const distance = document.getElementById("distance").value;
+    const fareMode = document.getElementById("fareMode").value;
+    const fixedFareInput = document.getElementById("fixedFare").value;
     const extra = document.getElementById("message").value.trim();
     const paymentOption = document.getElementById("paymentOption").value;
 
@@ -361,9 +373,16 @@
 
     let fareAmount = null;
     let estimate = "किराया टीम से पूछें";
-    if (rate > 0 && distance && Number(distance) > 0) {
+    if (fareMode === "fixed") {
+      if (!fixedFareInput || Number(fixedFareInput) <= 0) {
+        alert("कृपया Direct Fixed Fare में कुल किराया लिखें।");
+        return;
+      }
+      fareAmount = Math.round(Number(fixedFareInput));
+      estimate = "₹" + fareAmount + " (Direct Fixed Fare)";
+    } else if (rate > 0 && distance && Number(distance) > 0) {
       fareAmount = rate * Number(distance);
-      estimate = "₹" + fareAmount + " (अनुमानित)";
+      estimate = "₹" + fareAmount + " (प्रति KM के हिसाब से अनुमानित)";
     }
     const paymentAmount = fareAmount === null ? null :
       (paymentOption === "advance" ? Math.ceil(fareAmount * 0.20) : fareAmount);
@@ -381,6 +400,7 @@
       "Destination: " + destination + "\n" +
       "Date: " + date + "\n" +
       "Time: " + time + "\n" +
+      "Fare Type: " + (fareMode === "fixed" ? "Direct Fixed Fare" : "Per KM") + "\n" +
       "Distance: " + (distance ? distance + " KM" : "Not provided") + "\n" +
       "Estimated Fare: " + estimate + "\n" +
       "Payment Option: " + paymentLabel + "\n" +
@@ -403,6 +423,8 @@
           travelDate: date,
           travelTime: time,
           distanceKm: distance && Number(distance) > 0 ? Number(distance) : null,
+          fareMode: fareMode,
+          fixedFareAmount: fareMode === "fixed" ? fareAmount : null,
           extraDetails: extra,
           estimatedFare: estimate,
           estimatedFareAmount: fareAmount,
