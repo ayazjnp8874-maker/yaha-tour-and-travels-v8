@@ -191,13 +191,21 @@
       <label for="vehicle">Vehicle चुनें / Select Vehicle</label>
       <select id="vehicle" required>
         <option value="">Vehicle चुनें / Select Vehicle</option>
-        <option value="Ertiga" data-rate="14" data-fare-type="per_km">Maruti Ertiga - ₹14/KM (प्रति KM)</option>
-        <option value="Dzire" data-rate="12" data-fare-type="per_km">Maruti Dzire - ₹12/KM (प्रति KM)</option>
-        <option value="Auto Rickshaw" data-rate="0" data-fare-type="fixed">Auto Rickshaw - YAHA Fixed Fare (कुल किराया)</option>
-        <option value="Bike" data-rate="0" data-fare-type="fixed">Bike - YAHA Fixed Fare (कुल किराया)</option>
+        <option value="Ertiga" data-rate="14">Maruti Ertiga / मारुति अर्टिगा</option>
+        <option value="Dzire" data-rate="12">Maruti Dzire / मारुति डिजायर</option>
+        <option value="Auto Rickshaw" data-rate="0">Auto Rickshaw / ऑटो रिक्शा</option>
+        <option value="Bike" data-rate="0">Bike / बाइक</option>
       </select>
 
-      <p id="vehicleFareNote" class="note">किराया वाहन के अनुसार / Fare method depends on vehicle: Ertiga और Dzire प्रति KM; Auto Rickshaw और Bike का कुल किराया YAHA तय करेगा / Ertiga and Dzire are per-KM; YAHA sets the total fare for Auto Rickshaw and Bike.</p>
+      <div id="fareTypeArea" hidden>
+        <label for="fareType">किराये का तरीका चुनें / Choose Fare Method</label>
+        <select id="fareType">
+          <option value="">किराया तरीका चुनें / Select fare method</option>
+          <option value="fixed">फिक्स कुल किराया / Fixed Total Fare</option>
+          <option value="per_km">प्रति KM / Per KM</option>
+        </select>
+      </div>
+      <p id="vehicleFareNote" class="note" aria-live="polite">पहले वाहन चुनें / Please select a vehicle first.</p>
 
       <label for="distance">अनुमानित दूरी (KM) / Approx. Distance — Per KM bookings</label>
       <input id="distance" type="number" min="1" placeholder="जैसे 100">
@@ -343,20 +351,34 @@
   function applyVehicleFareOptions() {
     const vehicleSelect = document.getElementById("vehicle");
     const selected = vehicleSelect.selectedOptions[0];
-    const fareType = selected ? selected.dataset.fareType : "";
+    const vehicle = vehicleSelect.value;
+    const fareArea = document.getElementById("fareTypeArea");
+    const fareSelect = document.getElementById("fareType");
     const distanceInput = document.getElementById("distance");
     const note = document.getElementById("vehicleFareNote");
+    const isCar = vehicle === "Ertiga" || vehicle === "Dzire";
+    fareArea.hidden = !isCar;
+    fareSelect.required = isCar;
+    if (isCar && fareSelect.value !== "fixed" && fareSelect.value !== "per_km") fareSelect.value = "";
+    const fareType = isCar ? fareSelect.value : (vehicle ? "fixed" : "");
     distanceInput.required = fareType === "per_km";
-    distanceInput.disabled = fareType === "fixed";
+    distanceInput.disabled = fareType !== "per_km";
     if (fareType === "per_km") {
-      note.textContent = "प्रति KM किराया / Per KM Rate: इस वाहन का किराया दूरी के हिसाब से होगा / Fare is based on distance. Admin confirms the final total.";
+      const rate = Number(selected && selected.dataset.rate || 0);
+      note.textContent = "प्रति KM किराया / Per KM: ₹" + rate + " प्रति KM। दूरी भरें; अनुमानित किराया दूरी × रेट से निकलेगा। / Enter distance; estimated fare = distance × rate.";
     } else if (fareType === "fixed") {
-      note.textContent = "फिक्स कुल किराया / Fixed Total Fare: YAHA Admin कुल किराया लिखेगा। ग्राहक मंजूर करेगा तभी Booking confirm होगी / YAHA Admin enters the total fare; booking confirms after customer accepts.";
+      note.textContent = "फिक्स कुल किराया / Fixed Total Fare: YAHA Admin आपकी यात्रा देखकर कुल किराया तय करेगा। ग्राहक मंजूर करेगा तभी Booking आगे बढ़ेगी। / Admin sets the total fare; booking proceeds after customer accepts.";
+    } else if (isCar) {
+      note.textContent = "कृपया Fixed Fare या Per KM चुनें। / Please choose Fixed Fare or Per KM.";
     } else {
-      note.textContent = "किराया वाहन के अनुसार / Fare method depends on vehicle.";
+      note.textContent = "पहले वाहन चुनें / Please select a vehicle first.";
     }
   }
-  document.getElementById("vehicle").addEventListener("change", applyVehicleFareOptions);
+  document.getElementById("vehicle").addEventListener("change", function() {
+    document.getElementById("fareType").value = "";
+    applyVehicleFareOptions();
+  });
+  document.getElementById("fareType").addEventListener("change", applyVehicleFareOptions);
   applyVehicleFareOptions();
 
   document.getElementById("bookingForm").addEventListener("submit", async function(e) {
@@ -371,7 +393,8 @@
     const time = document.getElementById("travelTime").value;
     const distance = document.getElementById("distance").value;
     const selectedVehicle = document.getElementById("vehicle").selectedOptions[0];
-    const fareType = selectedVehicle ? selectedVehicle.dataset.fareType : "";
+    const isCar = vehicle === "Ertiga" || vehicle === "Dzire";
+    const fareType = isCar ? document.getElementById("fareType").value : (vehicle ? "fixed" : "");
     const extra = document.getElementById("message").value.trim();
     const paymentOption = document.getElementById("paymentOption").value;
 
