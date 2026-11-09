@@ -196,6 +196,14 @@
         <option value="Bike" data-rate="0">Bike - किराया पूछें</option>
       </select>
 
+      <label for="fareType">किराये का तरीका चुनें</label>
+      <select id="fareType" required>
+        <option value="">किराये का तरीका चुनें</option>
+        <option value="per_km">KM के हिसाब से किराया</option>
+        <option value="fixed">मेरे द्वारा तय Fixed Rate</option>
+      </select>
+      <p id="fareTypeNote" class="note">KM या Fixed Rate चुनें। Fixed Rate का कुल किराया YAHA TOUR AND TRAVELS तय करेगा।</p>
+
       <label for="distance">अनुमानित दूरी (KM) — KM वाले किराये के लिए</label>
       <input id="distance" type="number" min="1" placeholder="जैसे 100">
 
@@ -336,6 +344,21 @@
   const localToday = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
   document.getElementById("travelDate").min = localToday;
 
+  document.getElementById("fareType").addEventListener("change", function() {
+    const distanceInput = document.getElementById("distance");
+    const note = document.getElementById("fareTypeNote");
+    if (this.value === "per_km") {
+      distanceInput.required = true;
+      note.textContent = "वाहन के प्रति KM रेट के आधार पर किराया तय होगा। अंतिम कुल किराया Admin कन्फर्म करेगा।";
+    } else if (this.value === "fixed") {
+      distanceInput.required = false;
+      note.textContent = "आपके लिए कुल Fixed Rate YAHA TOUR AND TRAVELS तय करेगा। दूरी देना वैकल्पिक है।";
+    } else {
+      distanceInput.required = false;
+      note.textContent = "KM या Fixed Rate चुनें। Fixed Rate का कुल किराया YAHA TOUR AND TRAVELS तय करेगा।";
+    }
+  });
+
   document.getElementById("bookingForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
@@ -347,6 +370,7 @@
     const date = document.getElementById("travelDate").value;
     const time = document.getElementById("travelTime").value;
     const distance = document.getElementById("distance").value;
+    const fareType = document.getElementById("fareType").value;
     const extra = document.getElementById("message").value.trim();
     const paymentOption = document.getElementById("paymentOption").value;
 
@@ -358,10 +382,22 @@
     const selectedVehicle = document.getElementById("vehicle").selectedOptions[0];
     const rate = Number(selectedVehicle && selectedVehicle.dataset.rate || 0);
     const vehicleLabel = selectedVehicle ? selectedVehicle.textContent : vehicle;
+    if (!fareType) {
+      alert("कृपया KM के हिसाब से या Fixed Rate चुनें।");
+      return;
+    }
+    if (fareType === "per_km" && (!distance || Number(distance) <= 0)) {
+      alert("KM के हिसाब से Booking के लिए अनुमानित दूरी भरें।");
+      document.getElementById("distance").focus();
+      return;
+    }
+    const fareTypeLabel = fareType === "per_km" ? "KM के हिसाब से" : "Fixed Rate (कुल किराया YAHA TOUR AND TRAVELS तय करेगा)";
 
-    // Final fare will be set by Admin after reviewing the trip.
+    // Final payable fare is confirmed by Admin after reviewing the trip.
     const fareAmount = null;
-    const estimate = "किराया Admin द्वारा तय किया जाएगा";
+    const estimate = fareType === "per_km"
+      ? "KM के हिसाब से; अंतिम किराया Admin कन्फर्म करेगा"
+      : "Customer ने Fixed Rate चुना; कुल किराया Admin तय करेगा";
     const paymentAmount = null;
     const paymentLabel = paymentOption === "advance" ? "20% Advance (किराया तय होने के बाद)" : "Full Payment (किराया तय होने के बाद)";
 
@@ -373,11 +409,13 @@
       "Name: " + name + "\n" +
       "Mobile: " + mobile + "\n" +
       "Vehicle: " + vehicleLabel + "\n" +
+      "Fare Type: " + fareTypeLabel + "\n" +
       "Pickup: " + pickup + "\n" +
       "Destination: " + destination + "\n" +
       "Date: " + date + "\n" +
       "Time: " + time + "\n" +
       "Distance: " + (distance ? distance + " KM" : "Not provided") + "\n" +
+      "Fare Type: " + fareTypeLabel + "\n" +
       "Estimated Fare: " + estimate + "\n" +
       "Payment Option: " + paymentLabel + "\n" +
       "Payment Amount: " + (paymentAmount === null ? "Fare confirmation ke baad" : "₹" + paymentAmount) + "\n" +
@@ -399,6 +437,8 @@
           travelDate: date,
           travelTime: time,
           distanceKm: distance && Number(distance) > 0 ? Number(distance) : null,
+          fareType: fareType,
+          fareTypeLabel: fareTypeLabel,
           extraDetails: extra,
           estimatedFare: estimate,
           estimatedFareAmount: null,
