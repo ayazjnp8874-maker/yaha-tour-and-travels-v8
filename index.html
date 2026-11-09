@@ -193,6 +193,7 @@
         <option value="">Vehicle चुनें</option>
         <option value="Ertiga" data-rate="14">Maruti Ertiga - ₹14/KM</option>
         <option value="Dzire" data-rate="12">Maruti Dzire - ₹12/KM</option>
+        <option value="Auto Rickshaw" data-rate="0">Auto Rickshaw - किराया पूछें</option>
         <option value="Bike" data-rate="0">Bike - किराया पूछें</option>
       </select>
 
@@ -408,7 +409,7 @@
       document.getElementById("distance").focus();
       return;
     }
-    const fareTypeLabel = fareType === "per_km" ? "KM के हिसाब से" : "Fixed Rate (कुल किराया YAHA TOUR AND TRAVELS तय करेगा)";
+    const fareTypeLabel = fareType === "per_km" ? "KM के हिसाब से" : "Fixed Rate — पहले किराया बताया जाएगा, ग्राहक की मंजूरी के बाद Booking होगी";
 
     // Final payable fare is confirmed by Admin after reviewing the trip.
     const fareAmount = null;
@@ -465,7 +466,8 @@
           paymentAmountDue: paymentAmount,
           paymentStatus: "unpaid",
           paymentUpiId: "mohammadayazkhan73-1@oksbi",
-          status: "new",
+          status: fareType === "fixed" ? "awaiting_fare" : "new",
+          fareQuoteStatus: fareType === "fixed" ? "requested" : "not_required",
           appVersion: "V8",
           customerUid: firebase.auth().currentUser ? firebase.auth().currentUser.uid : null,
           customerEmail: firebase.auth().currentUser ? firebase.auth().currentUser.email : null,
@@ -515,6 +517,29 @@
         h.textContent = (b.bookingId || doc.id) + " — " + (b.status || "new");
         p.textContent = (b.vehicle || "") + " | " + (b.pickup || "") + " से " + (b.destination || "") + " | " + (b.travelDate || "") + " " + (b.travelTime || "");
         item.append(h,p);
+        if (b.fareType === "fixed" && b.fareQuoteStatus === "offered" && b.customerUid === user.uid) {
+          const quote = document.createElement("p");
+          quote.textContent = "आपका तय किराया: ₹" + Number(b.adminFareAmount || 0).toLocaleString("en-IN");
+          quote.style.cssText = "font-weight:700;background:#fff4c2;padding:10px;border-radius:6px;";
+          const accept = document.createElement("button");
+          accept.type = "button"; accept.textContent = "किराया मंजूर करें और Booking करें";
+          accept.style.cssText = "background:#16803c;color:white;padding:10px;border:0;border-radius:6px;";
+          const result = document.createElement("small"); result.style.display = "block";
+          accept.addEventListener("click", async () => {
+            if (!confirm("क्या आप ₹" + Number(b.adminFareAmount || 0) + " किराये पर Booking मंजूर करते हैं?")) return;
+            accept.disabled = true;
+            try {
+              await doc.ref.update({fareQuoteStatus:"accepted",fareAcceptedAt:firebase.firestore.FieldValue.serverTimestamp(),status:"new"});
+              result.textContent = "किराया मंजूर हो गया। आपकी Booking Admin को भेज दी गई है।";
+              await loadCustomerBookings();
+            } catch(err) { result.textContent = "मंजूरी नहीं हुई: " + err.message; accept.disabled = false; }
+          });
+          item.append(quote,accept,result);
+        } else if (b.fareType === "fixed" && b.fareQuoteStatus === "requested") {
+          const pending = document.createElement("p"); pending.textContent = "किराया तय होकर आने तक Booking Confirm नहीं है।"; item.appendChild(pending);
+        } else if (b.fareType === "fixed" && b.fareQuoteStatus === "accepted") {
+          const accepted = document.createElement("p"); accepted.textContent = "आपने ₹" + Number(b.adminFareAmount || 0).toLocaleString("en-IN") + " किराया मंजूर कर दिया है।"; item.appendChild(accepted);
+        }
         if (["new","assigned"].includes(b.status || "new") && b.customerUid === user.uid) {
           const cancel = document.createElement("button");
           cancel.type = "button";
@@ -693,6 +718,7 @@
           "\nDate/Time: " + (b.travelDate || "") + " " + (b.travelTime || "") +
           "\nDistance: " + (b.distanceKm || "Not given") + " KM" +
           "\nFare: " + (b.estimatedFare || "") +
+          "\nFare quote status: " + (b.fareQuoteStatus || "not_required") +
           "\nStatus: " + (b.status || "new");
         card.appendChild(details);
         const fareEditor = document.createElement("div");
@@ -715,6 +741,7 @@
             const due = b.paymentOption === "advance" ? Math.ceil(amount * 0.20) : amount;
             await doc.ref.update({
               adminFareAmount: amount,
+              fareQuoteStatus: b.fareType === "fixed" ? "offered" : (b.fareQuoteStatus || "not_required"),
               estimatedFareAmount: amount,
               estimatedFare: "₹" + amount + " (Admin द्वारा तय)",
               paymentAmountDue: due,
@@ -736,7 +763,7 @@
           card.appendChild(cancelNotice);
         }
         const status = document.createElement("select");
-        ["new", "accepted", "assigned", "started", "completed", "cancelled"].forEach((value) => {
+        ["awaiting_fare", "new", "accepted", "assigned", "started", "completed", "cancelled"].forEach((value) => {
           const option = document.createElement("option");
           option.value = value;
           option.textContent = value;
@@ -852,6 +879,7 @@
     const standardVehicles = [
       {name:"Ertiga", ratePerKm:14},
       {name:"Dzire", ratePerKm:12},
+      {name:"Auto Rickshaw", ratePerKm:0},
       {name:"Bike", ratePerKm:0}
     ];
     const vehiclesByName = new Map(standardVehicles.map(v => [v.name.toLowerCase(), v]));
