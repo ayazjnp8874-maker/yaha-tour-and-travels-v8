@@ -137,8 +137,12 @@
       <span>₹12 / KM</span>
     </div>
     <div class="fare">
-      <span>Bike</span>
-      <span>किराया पूछें</span>
+      <span>Auto Rickshaw / ऑटो</span>
+      <span>फिक्स किराया</span>
+    </div>
+    <div class="fare">
+      <span>Bike / बाइक</span>
+      <span>फिक्स किराया</span>
     </div>
     <p class="note">* अंतिम किराया दूरी, यात्रा और उपलब्धता के अनुसार कन्फर्म किया जाएगा।</p>
   </section>
@@ -917,9 +921,11 @@
           if (!v.name) return;
           // Ignore the accidental "Dzre" typo; keep the correct standard "Dzire" option.
           if (v.name.trim().toLowerCase().replace(/[^a-z]/g, "") === "dzre") return;
-          vehiclesByName.set(v.name.trim().toLowerCase(), {
+          const normalizedName = v.name.trim().toLowerCase();
+          const canonicalRates = { "ertiga": 14, "dzire": 12, "auto rickshaw": 0, "bike": 0 };
+          vehiclesByName.set(normalizedName, {
             name:v.name.trim(),
-            ratePerKm:Number(v.ratePerKm) || 0
+            ratePerKm:Object.prototype.hasOwnProperty.call(canonicalRates, normalizedName) ? canonicalRates[normalizedName] : (Number(v.ratePerKm) || 0)
           });
         });
       } catch (err) {
@@ -1087,7 +1093,7 @@
     event.preventDefault();
     driverLoginForm.hidden = true;
     driverMessage.textContent = "पुराना Driver Login बंद है। ऊपर Unified Login से लॉगिन करके Driver Dashboard चुनें।";
-    document.getElementById("unifiedForm").scrollIntoView({behavior:"smooth",block:"center"});
+    document.getElementById("unifiedLoginForm").scrollIntoView({behavior:"smooth",block:"center"});
   });
   document.getElementById("refreshDriverBookings").addEventListener("click", loadDriverBookings);
   document.getElementById("driverLogout").addEventListener("click", async () => {
@@ -1095,9 +1101,9 @@
     driverDashboard.hidden = true; driverLoginForm.hidden = true;
     document.getElementById("driverPanel").hidden = true;
     document.getElementById("unifiedRoles").hidden = true;
-    document.getElementById("unifiedForm").hidden = false;
+    document.getElementById("unifiedLoginForm").hidden = false;
     driverBookings.textContent = ""; driverMessage.textContent = "Logout हो गया। अब Unified Login करें।";
-    document.getElementById("unifiedForm").scrollIntoView({behavior:"smooth",block:"center"});
+    document.getElementById("unifiedLoginForm").scrollIntoView({behavior:"smooth",block:"center"});
   });
 
   function contactWhatsAppSecond() {
