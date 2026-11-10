@@ -307,15 +307,15 @@
     const fareType = isCar ? fareSelect.value : (vehicle ? "fixed" : "");
     const perKm = fareType === "per_km";
 
-    // Show distance for both car fare methods. It is mandatory only for Per KM.
-    // For Fixed Fare it remains optional so customers can still share an approximate route distance.
-    const showDistance = isCar;
+    // Show route distance for every selected vehicle. It is mandatory only for Per KM cars.
+    // Fixed Fare customers can still see/share the route KM; Admin quotes the total fare separately.
+    const showDistance = Boolean(vehicle);
     distanceLabel.hidden = !showDistance;
     distanceInput.hidden = !showDistance;
     distanceInput.disabled = !showDistance;
     distanceInput.required = perKm;
     distanceInput.setAttribute("aria-disabled", String(!showDistance));
-    distanceInput.placeholder = perKm ? "Per KM ke liye distance (jaise 100)" : "Optional: approximate distance (KM)";
+    distanceInput.placeholder = perKm ? "Per KM ke liye distance (jaise 100)" : "Route distance (KM) — auto calculated";
 
     const estimateBox = document.getElementById("fareEstimate");
     if (!perKm) {
@@ -358,11 +358,13 @@
     const destinationText = document.getElementById("destination").value.trim();
     const status = document.getElementById("routeDistanceStatus");
     const distanceField = document.getElementById("distance");
+    const sequence = ++routeLookupSequence;
     if (!pickupText || !destinationText) {
+      distanceField.value = "";
+      applyVehicleFareOptions();
       status.textContent = "Pickup और Final Destination भरें। दूरी अपने-आप निकालने की कोशिश होगी।";
       return;
     }
-    const sequence = ++routeLookupSequence;
     status.textContent = "सड़क की दूरी निकाली जा रही है…";
     try {
       async function geocode(query) {
@@ -388,14 +390,23 @@
       status.textContent = "अनुमानित सड़क दूरी: लगभग " + km + " KM (" + start.display_name.split(",").slice(0,2).join(",") + " से " + end.display_name.split(",").slice(0,2).join(",") + ")। यह अनुमान है; वास्तविक दूरी रास्ते के अनुसार बदल सकती है।";
     } catch (error) {
       if (sequence !== routeLookupSequence) return;
+      distanceField.value = "";
+      applyVehicleFareOptions();
       status.textContent = "दूरी अपने-आप नहीं मिल सकी। कृपया सही Pickup/Destination लिखें या KM खुद भरें।";
     }
   }
   ["pickup", "destination"].forEach(function(id) {
-    document.getElementById(id).addEventListener("change", updateRouteDistance);
-    document.getElementById(id).addEventListener("blur", function() {
+    document.getElementById(id).addEventListener("input", function() {
       clearTimeout(routeLookupTimer);
-      routeLookupTimer = setTimeout(updateRouteDistance, 350);
+      routeLookupSequence++;
+      document.getElementById("distance").value = "";
+      applyVehicleFareOptions();
+      document.getElementById("routeDistanceStatus").textContent = "स्थान बदल रहा है। भरने के बाद सड़क की दूरी निकाली जाएगी।";
+      routeLookupTimer = setTimeout(updateRouteDistance, 900);
+    });
+    document.getElementById(id).addEventListener("change", function() {
+      clearTimeout(routeLookupTimer);
+      updateRouteDistance();
     });
   });
 
