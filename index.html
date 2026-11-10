@@ -223,6 +223,7 @@
 
       <label for="destination">Final Destination (अंतिम गंतव्य)</label>
       <input id="destination" type="text" placeholder="अंतिम गंतव्य शहर / जगह लिखें" required>
+      <p id="routeDistanceStatus" class="note" aria-live="polite">Pickup और Destination भरें। दूरी अपने-आप निकालने की कोशिश होगी।</p>
 
       <label for="travelDate">यात्रा की तारीख</label>
       <input id="travelDate" type="date" required>
@@ -437,6 +438,57 @@
   });
   document.getElementById("fareType").addEventListener("change", applyVehicleFareOptions);
   document.getElementById("distance").addEventListener("input", applyVehicleFareOptions);
+
+  // Approximate road distance using OpenStreetMap geocoding and OSRM routing.
+  // Public services are best-effort; if unavailable, customer can enter KM manually.
+  let routeLookupTimer = null;
+  let routeLookupSequence = 0;
+  async function updateRouteDistance() {
+    const pickupText = document.getElementById("pickup").value.trim();
+    const destinationText = document.getElementById("destination").value.trim();
+    const status = document.getElementById("routeDistanceStatus");
+    const distanceField = document.getElementById("distance");
+    if (!pickupText || !destinationText) {
+      status.textContent = "Pickup और Final Destination भरें। दूरी अपने-आप निकालने की कोशिश होगी।";
+      return;
+    }
+    const sequence = ++routeLookupSequence;
+    status.textContent = "सड़क की दूरी निकाली जा रही है…";
+    try {
+      async function geocode(query) {
+        const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=in&q=" + encodeURIComponent(query);
+        const response = await fetch(url, { headers: { "Accept": "application/json" } });
+        if (!response.ok) throw new Error("Geocoding service unavailable");
+        const results = await response.json();
+        if (!results.length) throw new Error("स्थान नहीं मिला");
+        return results[0];
+      }
+      const start = await geocode(pickupText + ", Jaunpur, Uttar Pradesh, India");
+      const end = await geocode(destinationText + ", India");
+      const routeUrl = "https://router.project-osrm.org/route/v1/driving/" +
+        start.lon + "," + start.lat + ";" + end.lon + "," + end.lat + "?overview=false";
+      const routeResponse = await fetch(routeUrl);
+      if (!routeResponse.ok) throw new Error("Route service unavailable");
+      const routeData = await routeResponse.json();
+      if (sequence !== routeLookupSequence) return;
+      if (!routeData.routes || !routeData.routes.length) throw new Error("सड़क का रास्ता नहीं मिला");
+      const km = Math.max(1, Math.round(routeData.routes[0].distance / 1000));
+      distanceField.value = String(km);
+      applyVehicleFareOptions();
+      status.textContent = "अनुमानित सड़क दूरी: लगभग " + km + " KM (" + start.display_name.split(",").slice(0,2).join(",") + " से " + end.display_name.split(",").slice(0,2).join(",") + ")। यह अनुमान है; वास्तविक दूरी रास्ते के अनुसार बदल सकती है।";
+    } catch (error) {
+      if (sequence !== routeLookupSequence) return;
+      status.textContent = "दूरी अपने-आप नहीं मिल सकी। कृपया सही Pickup/Destination लिखें या KM खुद भरें।";
+    }
+  }
+  ["pickup", "destination"].forEach(function(id) {
+    document.getElementById(id).addEventListener("change", updateRouteDistance);
+    document.getElementById(id).addEventListener("blur", function() {
+      clearTimeout(routeLookupTimer);
+      routeLookupTimer = setTimeout(updateRouteDistance, 350);
+    });
+  });
+
   applyVehicleFareOptions();
 
   document.getElementById("bookingForm").addEventListener("submit", async function(e) {
