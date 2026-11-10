@@ -125,17 +125,17 @@
       <p id="fareEstimate" class="note" aria-live="polite" hidden></p>
 
       <div class="trip-location-box">
-        <h3>Pickup और एक Destination / यात्रा की जगह</h3>
+        <h3>Pickup और Drop Location / यात्रा की जगह</h3>
       <label for="pickup">Pickup Location (केवल Jaunpur के अंदर)</label>
       <input id="pickup" type="text" placeholder="Jaunpur के अंदर pickup की जगह लिखें" required>
       <p class="note">महत्वपूर्ण: YAHA TOUR AND TRAVELS में Pickup केवल Jaunpur के अंदर से होगा। Jaunpur से अन्य शहरों तक यात्रा की Booking कर सकते हैं। दूसरे शहर से Pickup उपलब्ध नहीं है।</p>
       <label style="display:flex;gap:8px;align-items:flex-start;margin:8px 0;"><input id="pickupJaunpurConfirm" type="checkbox" required style="width:auto;margin-top:4px;"> मैं पुष्टि करता/करती हूँ कि मेरी Pickup Location Jaunpur शहर/जिले के अंदर है।</label>
 
-      <label for="destination">Destination (एक ही गंतव्य)</label>
-      <input id="destination" type="text" placeholder="एक गंतव्य शहर / जगह लिखें" required>
-      <label for="distance">कुल दूरी (KM) / Pickup से Destination तक</label>
-      <input id="distance" type="number" min="1" step="1" inputmode="numeric" placeholder="कुल दूरी KM यहाँ लिखें">
-      <p id="routeDistanceStatus" class="note" aria-live="polite">सिर्फ एक Destination लिखें — बीच में कोई दूसरा Stop नहीं। Pickup से उसी Destination तक दूरी अपने-आप आएगी; जरूरत हो तो KM खुद भरें।</p>
+      <label for="destination">Drop Location (जहाँ छोड़ना है)</label>
+      <input id="destination" type="text" placeholder="जहाँ छोड़ना है वह शहर / जगह लिखें" required>
+      <label for="distance">कुल दूरी (KM) / Pickup से Drop तक</label>
+      <input id="distance" type="number" min="1" step="1" inputmode="numeric" placeholder="Pickup से Drop तक कुल KM लिखें">
+      <p id="routeDistanceStatus" class="note" aria-live="polite">सिर्फ एक Pickup और एक Drop Location भरें। बीच में कोई Stop नहीं होगा। Pickup से Drop तक की दूरी अपने-आप आएगी; जरूरत हो तो KM खुद भरें।</p>
       </div>
 
       <label for="travelDate">यात्रा की तारीख</label>
@@ -366,7 +366,7 @@
     if (!pickupText || !destinationText) {
       distanceField.value = "";
       applyVehicleFareOptions();
-      status.textContent = "Pickup और Final Destination भरें। दूरी अपने-आप निकालने की कोशिश होगी।";
+      status.textContent = "Pickup और Drop Location भरें। दूरी अपने-आप निकालने की कोशिश होगी।";
       return;
     }
     status.textContent = "सड़क की दूरी निकाली जा रही है…";
@@ -396,7 +396,7 @@
       if (sequence !== routeLookupSequence) return;
       distanceField.value = "";
       applyVehicleFareOptions();
-      status.textContent = "दूरी अपने-आप नहीं मिल सकी। कृपया सही Pickup/Destination लिखें या KM खुद भरें।";
+      status.textContent = "दूरी अपने-आप नहीं मिल सकी। कृपया सही Pickup/Drop Location लिखें या KM खुद भरें।";
     }
   }
   ["pickup", "destination"].forEach(function(id) {
@@ -492,7 +492,7 @@
       "Vehicle: " + vehicleLabel + "\n" +
       "Fare Type: " + fareTypeLabel + "\n" +
       "Pickup (Jaunpur only): " + pickup + "\n" +
-      "Destination: " + destination + "\n" +
+      "Drop Location: " + destination + "\n" +
       "Date: " + date + "\n" +
       "Time: " + time + "\n" +
       "Distance: " + (distance ? distance + " KM" : "Not provided") + "\n" +
@@ -1066,7 +1066,7 @@
         const detail = document.createElement("p");
         detail.style.whiteSpace = "pre-line";
         detail.textContent = "Customer: " + (b.name || "") + "\nPhone: " + (b.mobile || "") +
-          "\nPickup: " + (b.pickup || "") + "\nDestination: " + (b.destination || "") +
+          "\nPickup: " + (b.pickup || "") + "\nDrop Location: " + (b.destination || "") +
           "\nDate/Time: " + formatTravelDateTime(b.travelDate, b.travelTime) +
           "\nVehicle: " + (b.vehicle || "");
         const status = document.createElement("select");
