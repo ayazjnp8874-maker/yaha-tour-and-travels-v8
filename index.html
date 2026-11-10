@@ -121,8 +121,6 @@
       </div>
       <p id="vehicleFareNote" class="note" aria-live="polite">पहले वाहन चुनें / Please select a vehicle first.</p>
 
-      <label for="distance" hidden>अनुमानित दूरी (KM) / Approx. Distance — Per KM bookings</label>
-      <input id="distance" type="number" min="1" step="1" inputmode="numeric" placeholder="जैसे 100" hidden disabled>
       <p id="fareEstimate" class="note" aria-live="polite" hidden></p>
 
       <label for="pickup">Pickup Location (केवल Jaunpur के अंदर)</label>
@@ -132,7 +130,9 @@
 
       <label for="destination">Final Destination (अंतिम गंतव्य)</label>
       <input id="destination" type="text" placeholder="अंतिम गंतव्य शहर / जगह लिखें" required>
-      <p id="routeDistanceStatus" class="note" aria-live="polite">Pickup और Destination भरें। दूरी अपने-आप निकालने की कोशिश होगी।</p>
+      <label for="distance" hidden>Final Destination Distance (KM) / अंतिम गंतव्य तक दूरी (किलोमीटर)</label>
+      <input id="distance" type="number" min="1" step="1" inputmode="numeric" placeholder="Final Destination KM यहाँ लिखें" hidden disabled>
+      <p id="routeDistanceStatus" class="note" aria-live="polite">Pickup और Final Destination भरें। दूरी अपने-आप आएगी; जरूरत हो तो KM खुद भी लिख सकते हैं।</p>
 
       <label for="travelDate">यात्रा की तारीख</label>
       <input id="travelDate" type="date" required>
@@ -315,7 +315,7 @@
     distanceInput.disabled = !showDistance;
     distanceInput.required = perKm;
     distanceInput.setAttribute("aria-disabled", String(!showDistance));
-    distanceInput.placeholder = perKm ? "Per KM ke liye distance (jaise 100)" : "Route distance (KM) — auto calculated";
+    distanceInput.placeholder = perKm ? "Final Destination KM (जैसे 100)" : "Final Destination KM — जरूरत हो तो खुद लिखें";
 
     const estimateBox = document.getElementById("fareEstimate");
     if (!perKm) {
