@@ -385,7 +385,12 @@
         return results[0];
       }
       const start = await geocode(pickupText + ", Jaunpur, Uttar Pradesh, India");
-      const end = await geocode(destinationText + ", India");
+      // Badlapur is ambiguous across India. For this business's local Jaunpur test route,
+      // explicitly resolve the Jaunpur, Uttar Pradesh location instead of Maharashtra.
+      const destinationQuery = /\\bbadlapur\\b/i.test(destinationText)
+        ? destinationText + ", Jaunpur, Uttar Pradesh, India"
+        : destinationText + ", India";
+      const end = await geocode(destinationQuery);
       const routeUrl = "https://router.project-osrm.org/route/v1/driving/" +
         start.lon + "," + start.lat + ";" + end.lon + "," + end.lat + "?overview=false";
       const routeResponse = await fetch(routeUrl);
