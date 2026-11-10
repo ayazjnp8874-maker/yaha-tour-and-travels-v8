@@ -116,7 +116,7 @@
         <label for="fareType">किराये का तरीका चुनें / Choose Fare Method</label>
         <select id="fareType">
           <option value="">किराया तरीका चुनें / Select fare method</option>
-          <option value="fixed">फिक्स किराया — Admin कुल रकम बताएगा</option>
+          <option value="fixed">Fixed Rate / एक तय कुल किराया (Admin से)</option>
           <option value="per_km">प्रति KM / Per KM</option>
         </select>
       </div>
@@ -337,7 +337,7 @@
         : "दूरी भरते ही अनुमानित किराया दिखेगा। / Estimated fare will appear when route distance is available.";
     }
     if (fareType === "fixed") {
-      note.textContent = "फिक्स किराया: Admin पूरी यात्रा देखकर एक कुल रकम बताएगा। ग्राहक Dashboard में रकम देखकर मंजूर करेगा, तभी Booking आगे बढ़ेगी। 20% Advance या Full Payment का विकल्प किराया तय होने के बाद लागू होगा।";
+      note.textContent = "Fixed Rate: KM के हिसाब से नहीं। Admin पूरी यात्रा देखकर एक तय कुल रकम बताएगा। ग्राहक रकम देखकर मंजूर करेगा, तभी Booking आगे बढ़ेगी। 20% Advance या Full Payment का विकल्प किराया तय होने के बाद लागू होगा।";
     } else if (!fareType && isCar) {
       note.textContent = "कृपया Fixed Fare या Per KM चुनें। / Please choose Fixed Fare or Per KM.";
     } else if (!vehicle) {
@@ -471,7 +471,7 @@
       document.getElementById("distance").focus();
       return;
     }
-    const fareTypeLabel = fareType === "per_km" ? "KM के हिसाब से" : "फिक्स कुल किराया — Admin रकम बताएगा; ग्राहक की मंजूरी के बाद Booking आगे बढ़ेगी";
+    const fareTypeLabel = fareType === "per_km" ? "KM के हिसाब से" : "Fixed Rate / एक तय कुल किराया — Admin रकम बताएगा; ग्राहक की मंजूरी के बाद Booking आगे बढ़ेगी";
 
     // Final payable fare is confirmed by Admin after reviewing the trip.
     const fareAmount = null;
