@@ -751,41 +751,49 @@
           "\nFare quote status: " + (b.fareQuoteStatus || "not_required") +
           "\nStatus: " + (b.status || "new");
         card.appendChild(details);
-        const fareEditor = document.createElement("div");
-        fareEditor.style.cssText = "margin:10px 0;padding:10px;background:#fff8dc;border-radius:8px;";
-        const fareLabel = document.createElement("label");
-        fareLabel.textContent = "ग्राहक के लिए आपका तय कुल किराया (₹) / Your Fixed Total Fare for Customer (INR)";
-        fareLabel.style.display = "block";
-        const fareInput = document.createElement("input");
-        fareInput.type = "number"; fareInput.min = "1"; fareInput.step = "1";
-        fareInput.placeholder = "यहाँ कुल किराया लिखें / Enter total fare here";
-        fareInput.value = Number(b.adminFareAmount || b.estimatedFareAmount || 0) || "";
-        fareInput.style.cssText = "width:100%;padding:10px;margin:6px 0;";
-        const fareSave = document.createElement("button");
-        fareSave.type = "button"; fareSave.textContent = "फिक्स किराया Save करें / Save Fixed Fare";
-        fareSave.addEventListener("click", async () => {
-          const amount = Math.round(Number(fareInput.value));
-          if (!amount || amount < 1) { alert("कृपया सही किराया भरें।"); return; }
-          fareSave.disabled = true;
-          try {
-            const due = b.paymentOption === "advance" ? Math.ceil(amount * 0.20) : amount;
-            await doc.ref.update({
-              adminFareAmount: amount,
-              fareQuoteStatus: b.fareType === "fixed" ? "offered" : (b.fareQuoteStatus || "not_required"),
-              estimatedFareAmount: amount,
-              estimatedFare: "₹" + amount + " (Admin द्वारा तय)",
-              paymentAmountDue: due,
-              fareSetAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            adminMessage.textContent = "आपका तय किया हुआ किराया Save हो गया।";
-            await loadAdminBookings();
-          } catch (err) {
-            alert("किराया Save नहीं हुआ: " + err.message);
-            fareSave.disabled = false;
-          }
-        });
-        fareEditor.append(fareLabel, fareInput, fareSave);
-        card.appendChild(fareEditor);
+        if (b.fareType === "fixed") {
+          const fareEditor = document.createElement("div");
+          fareEditor.style.cssText = "margin:10px 0;padding:10px;background:#fff8dc;border-radius:8px;";
+          const fareLabel = document.createElement("label");
+          fareLabel.textContent = "ग्राहक के लिए तय कुल किराया (₹) / Fixed Total Fare for Customer";
+          fareLabel.style.display = "block";
+          const fareInput = document.createElement("input");
+          fareInput.type = "number"; fareInput.min = "1"; fareInput.step = "1";
+          fareInput.placeholder = "कुल किराया लिखें / Enter total fare";
+          fareInput.value = Number(b.adminFareAmount || 0) || "";
+          fareInput.style.cssText = "width:100%;padding:10px;margin:6px 0;";
+          const fareSave = document.createElement("button");
+          fareSave.type = "button";
+          fareSave.textContent = b.fareQuoteStatus === "accepted" ? "किराया पहले ही मंजूर है" : "फिक्स किराया ग्राहक को भेजें / Send Fixed Fare";
+          fareSave.disabled = b.fareQuoteStatus === "accepted";
+          fareSave.addEventListener("click", async () => {
+            const amount = Math.round(Number(fareInput.value));
+            if (!Number.isSafeInteger(amount) || amount < 1) { alert("कृपया ₹1 या उससे अधिक सही कुल किराया भरें।"); return; }
+            fareSave.disabled = true;
+            try {
+              const due = b.paymentOption === "advance" ? Math.ceil(amount * 0.20) : amount;
+              await doc.ref.update({
+                adminFareAmount: amount,
+                fareQuoteStatus: "offered",
+                estimatedFareAmount: amount,
+                estimatedFare: "₹" + amount.toLocaleString("en-IN") + " (Admin द्वारा तय)",
+                paymentAmountDue: due,
+                fareSetAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              adminMessage.textContent = "फिक्स किराया ग्राहक के Dashboard में भेज दिया गया है।";
+              await loadAdminBookings();
+            } catch (err) {
+              alert("किराया Save नहीं हुआ: " + err.message);
+              fareSave.disabled = false;
+            }
+          });
+          fareEditor.append(fareLabel, fareInput, fareSave);
+          card.appendChild(fareEditor);
+        } else if (b.fareType === "per_km") {
+          const fareInfo = document.createElement("p");
+          fareInfo.textContent = "Per KM Booking: ₹" + (b.vehicle === "Ertiga" ? "14" : b.vehicle === "Dzire" ? "12" : "—") + "/KM. Admin Fixed Fare यहाँ लागू नहीं होगा।";
+          card.appendChild(fareInfo);
+        }
         if (b.customerCancelRequested === true) {
           const cancelNotice = document.createElement("p");
           cancelNotice.textContent = "⚠ Customer ने इस booking को cancel करने का अनुरोध किया है।";
