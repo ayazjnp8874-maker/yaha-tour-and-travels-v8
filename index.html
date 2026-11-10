@@ -211,8 +211,8 @@
       </div>
       <p id="vehicleFareNote" class="note" aria-live="polite">पहले वाहन चुनें / Please select a vehicle first.</p>
 
-      <label for="distance">अनुमानित दूरी (KM) / Approx. Distance — Per KM bookings</label>
-      <input id="distance" type="number" min="1" step="1" inputmode="numeric" placeholder="जैसे 100">
+      <label for="distance" hidden>अनुमानित दूरी (KM) / Approx. Distance — Per KM bookings</label>
+      <input id="distance" type="number" min="1" step="1" inputmode="numeric" placeholder="जैसे 100" hidden disabled>
       <p id="fareEstimate" class="note" aria-live="polite" hidden></p>
 
       <label for="pickup">Pickup Location (केवल Jaunpur के अंदर)</label>
@@ -381,16 +381,25 @@
     const fareArea = document.getElementById("fareTypeArea");
     const fareSelect = document.getElementById("fareType");
     const distanceInput = document.getElementById("distance");
+    const distanceLabel = document.querySelector('label[for="distance"]');
     const note = document.getElementById("vehicleFareNote");
     const isCar = vehicle === "Ertiga" || vehicle === "Dzire";
+
     fareArea.hidden = !isCar;
     fareSelect.required = isCar;
-    if (isCar && fareSelect.value !== "fixed" && fareSelect.value !== "per_km") fareSelect.value = "";
+    if (!isCar) fareSelect.value = "";
     const fareType = isCar ? fareSelect.value : (vehicle ? "fixed" : "");
-    distanceInput.required = fareType === "per_km";
-    distanceInput.disabled = fareType !== "per_km";
+    const perKm = fareType === "per_km";
+
+    // Keep the distance field visible but disabled until Per KM is selected.
+    distanceLabel.hidden = !perKm;
+    distanceInput.hidden = !perKm;
+    distanceInput.disabled = !perKm;
+    distanceInput.required = perKm;
+    distanceInput.setAttribute("aria-disabled", String(!perKm));
+
     const estimateBox = document.getElementById("fareEstimate");
-    if (fareType !== "per_km") {
+    if (!perKm) {
       distanceInput.value = "";
       estimateBox.hidden = true;
       estimateBox.textContent = "";
