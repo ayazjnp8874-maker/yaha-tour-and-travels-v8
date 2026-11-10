@@ -130,8 +130,8 @@
 
       <label for="destination">Final Destination (अंतिम गंतव्य)</label>
       <input id="destination" type="text" placeholder="अंतिम गंतव्य शहर / जगह लिखें" required>
-      <label for="distance" hidden>Final Destination Distance (KM) / अंतिम गंतव्य तक दूरी (किलोमीटर)</label>
-      <input id="distance" type="number" min="1" step="1" inputmode="numeric" placeholder="Final Destination KM यहाँ लिखें" hidden disabled>
+      <label for="distance">Final Destination Distance (KM) / अंतिम गंतव्य तक दूरी (किलोमीटर)</label>
+      <input id="distance" type="number" min="1" step="1" inputmode="numeric" placeholder="Final Destination KM यहाँ लिखें">
       <p id="routeDistanceStatus" class="note" aria-live="polite">Pickup और Final Destination भरें। दूरी अपने-आप आएगी; जरूरत हो तो KM खुद भी लिख सकते हैं।</p>
 
       <label for="travelDate">यात्रा की तारीख</label>
@@ -309,7 +309,7 @@
 
     // Show route distance for every selected vehicle. It is mandatory only for Per KM cars.
     // Fixed Fare customers can still see/share the route KM; Admin quotes the total fare separately.
-    const showDistance = Boolean(vehicle);
+    const showDistance = true;
     distanceLabel.hidden = !showDistance;
     distanceInput.hidden = !showDistance;
     distanceInput.disabled = !showDistance;
