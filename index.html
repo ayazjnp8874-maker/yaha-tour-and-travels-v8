@@ -601,6 +601,16 @@
             } catch(err) { result.textContent = "मंजूरी नहीं हुई: " + err.message; accept.disabled = false; }
           });
           item.append(quote,accept,result);
+        if (b.paymentStatus === "paid") {
+          const paymentNote = document.createElement("p");
+          paymentNote.textContent = "✓ भुगतान प्राप्त और Admin द्वारा Confirm: ₹" + Number(b.paymentAmountReceived || b.paymentAmountDue || 0).toLocaleString("en-IN");
+          paymentNote.style.cssText = "color:#16803c;font-weight:700;";
+          item.appendChild(paymentNote);
+        } else {
+          const paymentNote = document.createElement("p");
+          paymentNote.textContent = "भुगतान स्थिति: अभी भुगतान Confirm नहीं हुआ है।";
+          item.appendChild(paymentNote);
+        }
         } else if (b.fareType === "fixed" && b.fareQuoteStatus === "requested") {
           const pending = document.createElement("p"); pending.textContent = "किराया तय होकर आने तक Booking Confirm नहीं है।"; item.appendChild(pending);
         } else if (b.fareType === "fixed" && b.fareQuoteStatus === "accepted") {
@@ -787,6 +797,54 @@
           "\nFare quote status: " + (b.fareQuoteStatus || "not_required") +
           "\nStatus: " + (b.status || "new");
         card.appendChild(details);
+        // Admin manually confirms money actually received; never mark paid automatically.
+        const paymentBox = document.createElement("div");
+        paymentBox.style.cssText = "margin:10px 0;padding:10px;background:#eef8ee;border:1px solid #b7d8b7;border-radius:8px;";
+        const paymentInfo = document.createElement("p");
+        paymentInfo.textContent = "Payment: " + (b.paymentStatus === "paid" ? "PAID / प्राप्त" : "UNPAID / बाकी") +
+          " | देय रकम: ₹" + Number(b.paymentAmountDue || 0).toLocaleString("en-IN") +
+          (b.paymentAmountReceived != null ? " | प्राप्त: ₹" + Number(b.paymentAmountReceived).toLocaleString("en-IN") : "");
+        paymentBox.appendChild(paymentInfo);
+        if (b.paymentStatus !== "paid") {
+          const receivedLabel = document.createElement("label");
+          receivedLabel.textContent = "वास्तव में प्राप्त रकम (₹)";
+          receivedLabel.style.display = "block";
+          const receivedInput = document.createElement("input");
+          receivedInput.type = "number"; receivedInput.min = "1"; receivedInput.step = "1";
+          receivedInput.placeholder = "प्राप्त रकम लिखें";
+          receivedInput.value = Number(b.paymentAmountDue || 0) || "";
+          receivedInput.style.cssText = "width:100%;padding:10px;margin:6px 0;";
+          const confirmPayment = document.createElement("button");
+          confirmPayment.type = "button";
+          confirmPayment.textContent = "Payment Received / भुगतान Confirm करें";
+          confirmPayment.addEventListener("click", async () => {
+            const received = Math.round(Number(receivedInput.value));
+            if (!Number.isSafeInteger(received) || received < 1) { alert("वास्तव में मिली सही रकम भरें।"); return; }
+            if (!confirm("क्या ₹" + received.toLocaleString("en-IN") + " वास्तव में प्राप्त हो चुके हैं?")) return;
+            confirmPayment.disabled = true;
+            try {
+              const currentAdmin = firebase.auth().currentUser;
+              if (!currentAdmin) throw new Error("Admin login नहीं मिला।");
+              await doc.ref.update({
+                paymentStatus: "paid",
+                paymentAmountReceived: received,
+                paymentConfirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                paymentConfirmedBy: currentAdmin.email || currentAdmin.uid
+              });
+              adminMessage.textContent = "भुगतान प्राप्ति Confirm हो गई।";
+              await loadAdminBookings();
+            } catch (err) {
+              adminMessage.textContent = "Payment confirm नहीं हुआ: " + err.message;
+              confirmPayment.disabled = false;
+            }
+          });
+          paymentBox.append(receivedLabel, receivedInput, confirmPayment);
+        } else {
+          const paidNote = document.createElement("strong");
+          paidNote.textContent = "✓ Admin ने भुगतान प्राप्ति Confirm की है।";
+          paymentBox.appendChild(paidNote);
+        }
+        card.appendChild(paymentBox);
         if (b.fareType === "fixed") {
           const fareEditor = document.createElement("div");
           fareEditor.style.cssText = "margin:10px 0;padding:10px;background:#fff8dc;border-radius:8px;";
