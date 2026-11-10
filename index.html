@@ -522,7 +522,7 @@
           fareTypeLabel: fareTypeLabel,
           extraDetails: extra,
           estimatedFare: estimate,
-          estimatedFareAmount: estimatedKmFare,
+          estimatedFareAmount: null, // Firestore rules require null until Admin confirms final fare.
           paymentOption: paymentOption,
           paymentOptionLabel: paymentLabel,
           paymentAmountDue: paymentAmount,
