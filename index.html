@@ -239,10 +239,14 @@
       <label for="message">अन्य जानकारी / Additional Details</label>
       <textarea id="message" placeholder="अपनी कोई अतिरिक्त जानकारी लिखें"></textarea>
 
-      <button type="submit">WhatsApp पर Booking भेजें</button>
+      <button type="submit">Booking Details तैयार करें</button>
     </form>
+    <div id="bookingWhatsAppActions" hidden>
+      <p class="note">Booking Details तैयार हैं। दोनों नंबरों पर भेजने के लिए नीचे दोनों बटन अलग-अलग दबाएँ। WhatsApp खुलने पर Send दबाना जरूरी है।</p>
+      <button type="button" onclick="sendBookingWhatsAppFirst()">पहले नंबर पर Booking भेजें (+91 88745 47741)</button>
+      <button type="button" onclick="sendBookingWhatsAppSecond()">दूसरे नंबर पर Booking भेजें (+91 70686 04325)</button>
+    </div>
     <p class="note">
-      बटन दबाने पर आपकी Booking की जानकारी WhatsApp पर खुलेगी।
       Booking तभी कन्फर्म होगी जब हमारी टीम इसकी पुष्टि करेगी।
     </p>
   </section>
@@ -330,6 +334,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script>
   const whatsappNumber = "918874547741";
+  let latestBookingWhatsAppMessage = "";
 
   // YAHA TOUR AND TRAVELS V8 - Firebase connection
   const firebaseConfig = {
@@ -556,13 +561,14 @@
       }
     }
 
-    const url = "https://wa.me/" + whatsappNumber +
-      "?text=" + encodeURIComponent(message);
-
+    latestBookingWhatsAppMessage = message;
+    document.getElementById("bookingWhatsAppActions").hidden = false;
+    document.getElementById("bookingWhatsAppActions").scrollIntoView({behavior:"smooth",block:"center"});
     if (!cloudSaved) {
-      alert("Booking WhatsApp par bheji jayegi, lekin cloud save nahi ho payi. Internet aur Firestore Rules check karne honge.");
+      alert("Booking WhatsApp par bhejne ke liye taiyar hai, lekin cloud save nahi ho payi. Customer Dashboard mein booking nahi dikhegi. Internet aur Firestore Rules check karne honge.");
+    } else {
+      alert("Booking Firestore mein save ho gayi hai. Ab dono WhatsApp numbers par alag-alag bhejein.");
     }
-    window.location.href = url;
   });
 
 
@@ -1134,6 +1140,14 @@
     document.getElementById("unifiedLoginForm").scrollIntoView({behavior:"smooth",block:"center"});
   });
 
+  function sendBookingWhatsAppFirst() {
+    if (!latestBookingWhatsAppMessage) { alert("पहले Booking Details तैयार करें।"); return; }
+    window.location.href = "https://wa.me/918874547741?text=" + encodeURIComponent(latestBookingWhatsAppMessage);
+  }
+  function sendBookingWhatsAppSecond() {
+    if (!latestBookingWhatsAppMessage) { alert("पहले Booking Details तैयार करें।"); return; }
+    window.location.href = "https://wa.me/917068604325?text=" + encodeURIComponent(latestBookingWhatsAppMessage);
+  }
   function contactWhatsAppSecond() {
     window.location.href = "https://wa.me/917068604325?text=" + encodeURIComponent("Hello YAHA TOUR AND TRAVELS, mujhe booking karni hai.");
   }
