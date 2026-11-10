@@ -116,7 +116,7 @@
         <label for="fareType">किराये का तरीका चुनें / Choose Fare Method</label>
         <select id="fareType">
           <option value="">किराया तरीका चुनें / Select fare method</option>
-          <option value="fixed">फिक्स कुल किराया / Fixed Total Fare</option>
+          <option value="fixed">फिक्स किराया — Admin कुल रकम बताएगा</option>
           <option value="per_km">प्रति KM / Per KM</option>
         </select>
       </div>
@@ -337,7 +337,7 @@
         : "दूरी भरते ही अनुमानित किराया दिखेगा। / Estimated fare will appear when route distance is available.";
     }
     if (fareType === "fixed") {
-      note.textContent = "फिक्स कुल किराया / Fixed Total Fare: YAHA Admin आपकी यात्रा देखकर कुल किराया तय करेगा। ग्राहक मंजूर करेगा तभी Booking आगे बढ़ेगी। / Admin sets the total fare; booking proceeds after customer accepts.";
+      note.textContent = "फिक्स किराया: Admin पूरी यात्रा देखकर एक कुल रकम बताएगा। ग्राहक Dashboard में रकम देखकर मंजूर करेगा, तभी Booking आगे बढ़ेगी। 20% Advance या Full Payment का विकल्प किराया तय होने के बाद लागू होगा।";
     } else if (!fareType && isCar) {
       note.textContent = "कृपया Fixed Fare या Per KM चुनें। / Please choose Fixed Fare or Per KM.";
     } else if (!vehicle) {
@@ -451,7 +451,7 @@
     const paymentOption = document.getElementById("paymentOption").value;
 
     if (fareType === "fixed" && !firebase.auth().currentUser) {
-      alert("Fixed Rate का किराया देखने और मंजूर करने के लिए पहले Customer Register या Login करें।");
+      alert("फिक्स किराया पाने और मंजूर करने के लिए पहले Customer Register या Login करें।");
       document.getElementById("customerAccountArea").scrollIntoView({behavior:"smooth",block:"center"});
       return;
     }
@@ -471,14 +471,14 @@
       document.getElementById("distance").focus();
       return;
     }
-    const fareTypeLabel = fareType === "per_km" ? "KM के हिसाब से" : "Fixed Rate — पहले किराया बताया जाएगा, ग्राहक की मंजूरी के बाद Booking होगी";
+    const fareTypeLabel = fareType === "per_km" ? "KM के हिसाब से" : "फिक्स कुल किराया — Admin रकम बताएगा; ग्राहक की मंजूरी के बाद Booking आगे बढ़ेगी";
 
     // Final payable fare is confirmed by Admin after reviewing the trip.
     const fareAmount = null;
     const estimatedKmFare = fareType === "per_km" ? Math.round(Number(distance) * rate) : null;
     const estimate = fareType === "per_km"
       ? "₹" + estimatedKmFare.toLocaleString("en-IN") + " (लगभग; " + distance + " KM × ₹" + rate + "/KM)"
-      : "Customer ने Fixed Rate चुना; कुल किराया Admin तय करेगा";
+      : "फिक्स किराया चुना गया; कुल रकम Admin तय करेगा";
     const paymentAmount = null;
     const paymentLabel = paymentOption === "advance" ? "20% Advance (किराया तय होने के बाद)" : "Full Payment (किराया तय होने के बाद)";
 
@@ -583,7 +583,9 @@
         item.append(h,p);
         if (b.fareType === "fixed" && b.fareQuoteStatus === "offered" && b.customerUid === user.uid) {
           const quote = document.createElement("p");
-          quote.textContent = "आपका तय किराया / Your quoted fare: ₹" + Number(b.adminFareAmount || 0).toLocaleString("en-IN");
+          const quotedTotal = Number(b.adminFareAmount || 0);
+          const quotedDue = Number(b.paymentAmountDue || quotedTotal);
+          quote.textContent = "Admin का तय कुल किराया: ₹" + quotedTotal.toLocaleString("en-IN") + " | " + (b.paymentOption === "advance" ? "20% Advance अभी देय: ₹" : "पूरा भुगतान अभी देय: ₹") + quotedDue.toLocaleString("en-IN") + ". भुगतान Admin की पुष्टि के अनुसार करें।";
           quote.style.cssText = "font-weight:700;background:#fff4c2;padding:10px;border-radius:6px;";
           const accept = document.createElement("button");
           accept.type = "button"; accept.textContent = "किराया मंजूर करें और Booking करें";
