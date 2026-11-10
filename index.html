@@ -220,8 +220,8 @@
       <p class="note">महत्वपूर्ण: YAHA TOUR AND TRAVELS में Pickup केवल Jaunpur के अंदर से होगा। Jaunpur से अन्य शहरों तक यात्रा की Booking कर सकते हैं। दूसरे शहर से Pickup उपलब्ध नहीं है।</p>
       <label style="display:flex;gap:8px;align-items:flex-start;margin:8px 0;"><input id="pickupJaunpurConfirm" type="checkbox" required style="width:auto;margin-top:4px;"> मैं पुष्टि करता/करती हूँ कि मेरी Pickup Location Jaunpur शहर/जिले के अंदर है।</label>
 
-      <label for="destination">Destination</label>
-      <input id="destination" type="text" placeholder="कहां जाना है?" required>
+      <label for="destination">Final Destination (अंतिम गंतव्य)</label>
+      <input id="destination" type="text" placeholder="अंतिम गंतव्य शहर / जगह लिखें" required>
 
       <label for="travelDate">यात्रा की तारीख</label>
       <input id="travelDate" type="date" required>
@@ -948,44 +948,17 @@
     adminMessage.textContent = "Logout ho gaya.";
   });
 
-  // Load admin-managed vehicles while always retaining the standard booking choices.
-  async function loadBookingVehicles() {
+  // Booking form offers only the four approved vehicle categories.
+  function loadBookingVehicles() {
     const select = document.getElementById("vehicle");
     if (!select) return;
-    const standardVehicles = [
-      {name:"Ertiga", ratePerKm:14},
-      {name:"Dzire", ratePerKm:12},
-      {name:"Auto Rickshaw", ratePerKm:0},
-      {name:"Bike", ratePerKm:0}
-    ];
-    const vehiclesByName = new Map(standardVehicles.map(v => [v.name.toLowerCase(), v]));
-    if (bookingsDb) {
-      try {
-        const snap = await bookingsDb.collection("vehicles").where("active", "==", true).get();
-        snap.forEach(doc => {
-          const v = doc.data();
-          if (!v.name) return;
-          // Ignore the accidental "Dzre" typo; keep the correct standard "Dzire" option.
-          if (v.name.trim().toLowerCase().replace(/[^a-z]/g, "") === "dzre") return;
-          const normalizedName = v.name.trim().toLowerCase();
-          const canonicalRates = { "ertiga": 14, "dzire": 12, "auto rickshaw": 0, "bike": 0 };
-          vehiclesByName.set(normalizedName, {
-            name:v.name.trim(),
-            ratePerKm:Object.prototype.hasOwnProperty.call(canonicalRates, normalizedName) ? canonicalRates[normalizedName] : (Number(v.ratePerKm) || 0)
-          });
-        });
-      } catch (err) {
-        console.warn("Admin vehicle list unavailable; standard choices remain.", err);
-      }
-    }
-    select.innerHTML = '<option value="">Vehicle चुनें</option>';
-    vehiclesByName.forEach(v => {
-      const option = document.createElement("option");
-      option.value = v.name;
-      option.textContent = v.name + " - " + (v.ratePerKm > 0 ? "₹" + v.ratePerKm + "/KM" : "किराया पूछें");
-      option.dataset.rate = String(v.ratePerKm);
-      select.appendChild(option);
-    });
+    select.innerHTML = `
+      <option value="">Vehicle चुनें / Select Vehicle</option>
+      <option value="Ertiga" data-rate="14">Maruti Ertiga / मारुति अर्टिगा</option>
+      <option value="Dzire" data-rate="12">Maruti Dzire / मारुति डिजायर</option>
+      <option value="Auto Rickshaw" data-rate="0">Auto Rickshaw / ऑटो रिक्शा</option>
+      <option value="Bike" data-rate="0">Bike / बाइक</option>`;
+    applyVehicleFareOptions();
   }
   loadBookingVehicles();
 
