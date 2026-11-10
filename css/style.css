@@ -88,3 +88,19 @@
       margin-top: 25px;
     }
     footer a { color: #ffd400; }
+
+
+/* Keep pickup and final destination together in one clear booking box. */
+.trip-location-box {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid #e0c000;
+  border-radius: 10px;
+  background: #fffdf0;
+}
+.trip-location-box h3 {
+  margin: 0 0 10px;
+  color: #171717;
+  font-size: 17px;
+}
+.trip-location-box label:first-of-type { margin-top: 8px; }
