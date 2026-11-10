@@ -306,9 +306,13 @@
     const note = document.getElementById("vehicleFareNote");
     const isCar = vehicle === "Ertiga" || vehicle === "Dzire";
 
-    fareArea.hidden = !isCar;
+    // Show the fare method for every selected vehicle. Cars can choose either
+    // method; Auto and Bike are fixed-fare only.
+    fareArea.hidden = !vehicle;
     fareSelect.required = isCar;
-    if (!isCar) fareSelect.value = "";
+    const perKmOption = fareSelect.querySelector('option[value="per_km"]');
+    if (perKmOption) perKmOption.disabled = !isCar;
+    if (!isCar) fareSelect.value = vehicle ? "fixed" : "";
     const fareType = isCar ? fareSelect.value : (vehicle ? "fixed" : "");
     const perKm = fareType === "per_km";
 
