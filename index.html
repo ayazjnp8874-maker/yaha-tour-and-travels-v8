@@ -349,6 +349,26 @@
     console.error("Firebase initialization error:", firebaseError);
   }
 
+  // Use local calendar values; never parse YYYY-MM-DD with Date(), which can shift dates by timezone.
+  function formatTravelDateTime(dateValue, timeValue) {
+    let dateText = "तारीख उपलब्ध नहीं";
+    const dateParts = String(dateValue || "").split("-");
+    if (dateParts.length === 3 && dateParts[0].length === 4) {
+      dateText = dateParts[2] + "/" + dateParts[1] + "/" + dateParts[0];
+    }
+    let timeText = "समय उपलब्ध नहीं";
+    const timeParts = String(timeValue || "").split(":");
+    if (timeParts.length >= 2) {
+      let hour = Number(timeParts[0]), minute = Number(timeParts[1]);
+      if (Number.isInteger(hour) && hour >= 0 && hour <= 23 && Number.isInteger(minute) && minute >= 0 && minute <= 59) {
+        const suffix = hour >= 12 ? "PM" : "AM";
+        const displayHour = hour % 12 || 12;
+        timeText = String(displayHour).padStart(2, "0") + ":" + String(minute).padStart(2, "0") + " " + suffix;
+      }
+    }
+    return dateText + " | " + timeText;
+  }
+
   const today = new Date();
   const localToday = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
   document.getElementById("travelDate").min = localToday;
@@ -410,6 +430,18 @@
     const destination = document.getElementById("destination").value.trim();
     const date = document.getElementById("travelDate").value;
     const time = document.getElementById("travelTime").value;
+    const todayCheck = new Date();
+    const todayValue = [todayCheck.getFullYear(), String(todayCheck.getMonth() + 1).padStart(2, "0"), String(todayCheck.getDate()).padStart(2, "0")].join("-");
+    if (!date || date < todayValue) {
+      alert("कृपया आज या आने वाली सही यात्रा तारीख चुनें।");
+      document.getElementById("travelDate").focus();
+      return;
+    }
+    if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)) {
+      alert("कृपया यात्रा का सही समय चुनें।");
+      document.getElementById("travelTime").focus();
+      return;
+    }
     const distance = document.getElementById("distance").value;
     const selectedVehicle = document.getElementById("vehicle").selectedOptions[0];
     const isCar = vehicle === "Ertiga" || vehicle === "Dzire";
@@ -545,7 +577,7 @@
         item.style.cssText = "border:1px solid #ddd;padding:12px;margin:10px 0;border-radius:8px";
         const h = document.createElement("strong"), p = document.createElement("p");
         h.textContent = (b.bookingId || doc.id) + " — " + (b.status || "new");
-        p.textContent = (b.vehicle || "") + " | " + (b.pickup || "") + " से " + (b.destination || "") + " | " + (b.travelDate || "") + " " + (b.travelTime || "");
+        p.textContent = (b.vehicle || "") + " | " + (b.pickup || "") + " से " + (b.destination || "") + " | " + formatTravelDateTime(b.travelDate, b.travelTime);
         item.append(h,p);
         if (b.fareType === "fixed" && b.fareQuoteStatus === "offered" && b.customerUid === user.uid) {
           const quote = document.createElement("p");
@@ -745,7 +777,7 @@
         details.textContent =
           "Mobile: " + (b.mobile || "") + "\nVehicle: " + (b.vehicle || "") +
           "\nRoute: " + (b.pickup || "") + " → " + (b.destination || "") +
-          "\nDate/Time: " + (b.travelDate || "") + " " + (b.travelTime || "") +
+          "\nDate/Time: " + formatTravelDateTime(b.travelDate, b.travelTime) +
           "\nDistance: " + (b.distanceKm || "Not given") + " KM" +
           "\nFare: " + (b.estimatedFare || "") +
           "\nFare quote status: " + (b.fareQuoteStatus || "not_required") +
