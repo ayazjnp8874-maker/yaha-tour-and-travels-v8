@@ -1092,7 +1092,7 @@
         detail.style.whiteSpace = "pre-line";
         detail.textContent = "Customer: " + (b.name || "") + "\nPhone: " + (b.mobile || "") +
           "\nPickup: " + (b.pickup || "") + "\nDestination: " + (b.destination || "") +
-          "\nDate/Time: " + (b.travelDate || "") + " " + (b.travelTime || "") +
+          "\nDate/Time: " + formatTravelDateTime(b.travelDate, b.travelTime) +
           "\nVehicle: " + (b.vehicle || "");
         const status = document.createElement("select");
         ["assigned", "accepted", "started", "completed"].forEach(v => {
