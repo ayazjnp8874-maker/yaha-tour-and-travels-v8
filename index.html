@@ -397,12 +397,15 @@
     const fareType = isCar ? fareSelect.value : (vehicle ? "fixed" : "");
     const perKm = fareType === "per_km";
 
-    // Keep the distance field visible but disabled until Per KM is selected.
-    distanceLabel.hidden = !perKm;
-    distanceInput.hidden = !perKm;
-    distanceInput.disabled = !perKm;
+    // Show distance for both car fare methods. It is mandatory only for Per KM.
+    // For Fixed Fare it remains optional so customers can still share an approximate route distance.
+    const showDistance = isCar;
+    distanceLabel.hidden = !showDistance;
+    distanceInput.hidden = !showDistance;
+    distanceInput.disabled = !showDistance;
     distanceInput.required = perKm;
-    distanceInput.setAttribute("aria-disabled", String(!perKm));
+    distanceInput.setAttribute("aria-disabled", String(!showDistance));
+    distanceInput.placeholder = perKm ? "Per KM ke liye distance (jaise 100)" : "Optional: approximate distance (KM)";
 
     const estimateBox = document.getElementById("fareEstimate");
     if (!perKm) {
