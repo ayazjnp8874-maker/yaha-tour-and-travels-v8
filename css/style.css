@@ -1,0 +1,90 @@
+* { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #171717;
+    }
+    header {
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 24px 12px;
+      border-bottom: 5px solid #ffd400;
+    }
+    header h1 {
+      color: #ffd400;
+      margin: 0 0 8px;
+      font-size: 25px;
+    }
+    header p { margin: 5px 0; }
+    .hero {
+      background: #222;
+      color: white;
+      text-align: center;
+      padding: 28px 15px;
+    }
+    .hero h2 { color: #ffd400; margin-top: 0; }
+    .container {
+      max-width: 650px;
+      margin: 20px auto;
+      padding: 0 14px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 18px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px #00000012;
+    }
+    h2, h3 { margin-top: 0; }
+    .fare {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px;
+      background: #fff8cc;
+      border-radius: 8px;
+      margin: 8px 0;
+      font-weight: bold;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 13px 0 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #bbb;
+      border-radius: 7px;
+      font-size: 16px;
+      background: white;
+    }
+    textarea { min-height: 75px; resize: vertical; }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 17px;
+      border: 0;
+      border-radius: 8px;
+      background: #ffd400;
+      color: #111;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #edc500; }
+    .note {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.5;
+    }
+    footer {
+      background: #111;
+      color: white;
+      text-align: center;
+      padding: 20px 10px;
+      margin-top: 25px;
+    }
+    footer a { color: #ffd400; }
