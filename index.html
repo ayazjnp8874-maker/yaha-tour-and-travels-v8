@@ -581,7 +581,7 @@
         h.textContent = (b.bookingId || doc.id) + " — " + (b.status || "new");
         p.textContent = (b.vehicle || "") + " | " + (b.pickup || "") + " से " + (b.destination || "") + " | " + formatTravelDateTime(b.travelDate, b.travelTime);
         item.append(h,p);
-        if (b.fareType === "fixed" && b.fareQuoteStatus === "offered" && b.customerUid === user.uid) {
+        if (b.fareType === "fixed" && b.fareQuoteStatus === "offered" && b.customerUid === user.uid && !["completed", "cancelled"].includes(b.status)) {
           const quote = document.createElement("p");
           const quotedTotal = Number(b.adminFareAmount || 0);
           const quotedDue = Number(b.paymentAmountDue || quotedTotal);
