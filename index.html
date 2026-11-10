@@ -319,7 +319,8 @@
 
     const estimateBox = document.getElementById("fareEstimate");
     if (!perKm) {
-      distanceInput.value = "";
+      // Keep the automatically calculated route distance visible for Fixed Fare too.
+      // Fixed Fare amount is quoted separately by Admin; distance is informational only.
       estimateBox.hidden = true;
       estimateBox.textContent = "";
     } else {
@@ -329,7 +330,7 @@
       estimateBox.hidden = false;
       estimateBox.textContent = km > 0
         ? "अनुमानित किराया / Estimated Fare: ₹" + (km * rate).toLocaleString("en-IN") + " (" + km + " KM × ₹" + rate + "). अंतिम पुष्टि YAHA Admin करेगा। / Final confirmation by YAHA Admin."
-        : "दूरी भरते ही अनुमानित किराया दिखेगा। / Estimated fare will appear when you enter distance.";
+        : "दूरी भरते ही अनुमानित किराया दिखेगा। / Estimated fare will appear when route distance is available.";
     }
     if (fareType === "fixed") {
       note.textContent = "फिक्स कुल किराया / Fixed Total Fare: YAHA Admin आपकी यात्रा देखकर कुल किराया तय करेगा। ग्राहक मंजूर करेगा तभी Booking आगे बढ़ेगी। / Admin sets the total fare; booking proceeds after customer accepts.";
