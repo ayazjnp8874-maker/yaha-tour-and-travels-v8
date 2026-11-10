@@ -5,13 +5,13 @@ service cloud.firestore {
     function isAdmin() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['admin']))
+        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || ('roles' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles is list && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['admin'])))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
     }
     function isActiveDriver() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['driver']))
+        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver' || ('roles' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles is list && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['driver'])))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
     }
     match /users/{uid} {
