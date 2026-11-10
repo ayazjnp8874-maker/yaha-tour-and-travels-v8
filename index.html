@@ -185,8 +185,9 @@
       <hr><h3>Vehicle Management</h3>
       <form id="vehicleForm">
         <label for="vehicleName">Vehicle Name</label><input id="vehicleName" placeholder="Ertiga / Dzire / Bike" required>
-        <label for="vehicleType">Type</label><select id="vehicleType"><option>Car</option><option>Bike</option></select>
-        <label for="vehicleRate">Rate (₹/KM; Bike के लिए 0)</label><input id="vehicleRate" type="number" min="0" value="0" required>
+        <label for="vehicleType">Type</label><select id="vehicleType"><option value="Car">Car</option><option value="Bike">Bike</option><option value="Auto">Auto</option></select>
+        <label for="vehicleFareMode">Fare Type</label><select id="vehicleFareMode"><option value="per_km">Per KM</option><option value="fixed">Fixed Fare</option></select>
+        <label for="vehicleRate">Rate (₹/KM; Fixed Fare में 0 रखें)</label><input id="vehicleRate" type="number" min="0" value="0" required>
         <label for="vehicleNote">Details</label><input id="vehicleNote" placeholder="Own / Attached / Model / Number">
         <button type="submit" id="vehicleSaveButton">Vehicle Save करें</button>
         <button type="button" id="vehicleCancelEdit" hidden>Editing रद्द करें</button>
@@ -1025,7 +1026,7 @@
     try {
       const vs=await bookingsDb.collection("vehicles").get(); vl.innerHTML="";
       if(vs.empty) vl.textContent="अभी कोई vehicle नहीं जोड़ा गया।";
-      vs.forEach(d=>{ const v=d.data(); const vehicleKey=String(v.name||"").toLowerCase().replace(/[^a-z]/g,""); if(vehicleKey==="dzre") return; const row=document.createElement("div"); row.style.cssText="border:1px solid #ddd;padding:10px;margin:8px 0;border-radius:8px"; const info=document.createElement("p"); info.textContent=(v.name||"Vehicle")+" | "+(v.type||"")+" | ₹"+(v.ratePerKm||0)+"/KM | "+(v.active===false?"Inactive":"Active"); row.appendChild(info); const edit=document.createElement("button"); edit.type="button"; edit.textContent="Edit / किराया बदलें"; edit.addEventListener("click",()=>{ document.getElementById("vehicleName").value=v.name||""; document.getElementById("vehicleType").value=v.type||"Car"; document.getElementById("vehicleRate").value=Number(v.ratePerKm)||0; document.getElementById("vehicleNote").value=v.note||""; document.getElementById("vehicleForm").dataset.editId=d.id; document.getElementById("vehicleSaveButton").textContent="Changes Save करें"; document.getElementById("vehicleCancelEdit").hidden=false; document.getElementById("adminMessage").textContent="अब नाम या किराया बदलकर Changes Save करें।"; document.getElementById("vehicleForm").scrollIntoView({behavior:"smooth",block:"center"}); }); row.appendChild(edit); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===false?"Activate":"Deactivate"; b.addEventListener("click",async()=>{b.disabled=true; try { await d.ref.update({active:v.active===false}); document.getElementById("adminMessage").textContent="Vehicle status update ho gaya."; await loadAdminResources(); await loadBookingVehicles(); } catch(err) { document.getElementById("adminMessage").textContent="Vehicle status update nahi hua: "+err.message; b.disabled=false; }}); row.appendChild(b); vl.appendChild(row); });
+      vs.forEach(d=>{ const v=d.data(); const vehicleKey=String(v.name||"").toLowerCase().replace(/[^a-z]/g,""); if(vehicleKey==="dzre") return; const row=document.createElement("div"); row.style.cssText="border:1px solid #ddd;padding:10px;margin:8px 0;border-radius:8px"; const info=document.createElement("p"); const mode=v.fareType || ((v.type==="Bike" || v.type==="Auto" || /auto rickshaw/i.test(v.name||""))?"fixed":"per_km"); info.textContent=(v.name||"Vehicle")+" | "+(v.type||"")+" | "+(mode==="fixed"?"Fixed Fare":"₹"+(v.ratePerKm||0)+"/KM")+" | "+(v.active===false?"Inactive":"Active"); row.appendChild(info); const edit=document.createElement("button"); edit.type="button"; edit.textContent="Edit / किराया बदलें"; edit.addEventListener("click",()=>{ document.getElementById("vehicleName").value=v.name||""; document.getElementById("vehicleType").value=v.type||"Car"; document.getElementById("vehicleFareMode").value=v.fareType || ((v.type==="Bike" || v.type==="Auto" || /auto rickshaw/i.test(v.name||""))?"fixed":"per_km"); document.getElementById("vehicleRate").value=Number(v.ratePerKm)||0; document.getElementById("vehicleNote").value=v.note||""; document.getElementById("vehicleForm").dataset.editId=d.id; document.getElementById("vehicleSaveButton").textContent="Changes Save करें"; document.getElementById("vehicleCancelEdit").hidden=false; document.getElementById("adminMessage").textContent="अब नाम या किराया बदलकर Changes Save करें।"; document.getElementById("vehicleForm").scrollIntoView({behavior:"smooth",block:"center"}); }); row.appendChild(edit); const b=document.createElement("button"); b.type="button"; b.textContent=v.active===false?"Activate":"Deactivate"; b.addEventListener("click",async()=>{b.disabled=true; try { await d.ref.update({active:v.active===false}); document.getElementById("adminMessage").textContent="Vehicle status update ho gaya."; await loadAdminResources(); await loadBookingVehicles(); } catch(err) { document.getElementById("adminMessage").textContent="Vehicle status update nahi hua: "+err.message; b.disabled=false; }}); row.appendChild(b); vl.appendChild(row); });
       const allUsers=await bookingsDb.collection("users").get(); dl.innerHTML="";
       const ds=allUsers.docs.filter(d=>{const v=d.data();return v.role==="driver" || (Array.isArray(v.roles) && v.roles.includes("driver"));});
       if(ds.length===0) dl.textContent="अभी Driver profile नहीं है।";
@@ -1037,6 +1038,7 @@
     delete form.dataset.editId;
     form.reset();
     document.getElementById("vehicleRate").value="0";
+    document.getElementById("vehicleFareMode").value="per_km";
     document.getElementById("vehicleSaveButton").textContent="Vehicle Save करें";
     document.getElementById("vehicleCancelEdit").hidden=true;
   }
@@ -1051,11 +1053,12 @@
       const vehicleData={
         name:document.getElementById("vehicleName").value.trim(),
         type:document.getElementById("vehicleType").value,
-        ratePerKm:Number(document.getElementById("vehicleRate").value),
+        fareType:document.getElementById("vehicleFareMode").value,
+        ratePerKm:document.getElementById("vehicleFareMode").value==="fixed"?0:Number(document.getElementById("vehicleRate").value),
         note:document.getElementById("vehicleNote").value.trim()
       };
-      if(!vehicleData.name || !Number.isFinite(vehicleData.ratePerKm) || vehicleData.ratePerKm<0)
-        throw new Error("Vehicle name और सही किराया भरें।");
+      if(!vehicleData.name || !Number.isFinite(vehicleData.ratePerKm) || vehicleData.ratePerKm<0 || (vehicleData.fareType==="per_km" && vehicleData.ratePerKm<=0))
+        throw new Error("Vehicle name भरें। Per KM के लिए ₹/KM rate 0 से अधिक रखें; Fixed Fare में rate अपने-आप 0 रहेगा।");
 
       const editId=form.dataset.editId;
       // Stop accidental duplicate active entries with the same name, type and details.
