@@ -64,6 +64,7 @@
     <label for="unifiedPassword">Password</label><input id="unifiedPassword" type="password" required>
     <button type="submit">Login करें</button>
   </form>
+  <button type="button" id="showCustomerRegister">नया Customer Account बनाएँ / Register</button>
   <div id="unifiedRoles" hidden>
     <p id="unifiedWelcome"></p><p>अपना Dashboard चुनें:</p>
     <div id="unifiedRoleButtons"></div>
@@ -1148,6 +1149,14 @@
   const unifiedButtons=document.getElementById("unifiedRoleButtons");
   const unifiedMessage=document.getElementById("unifiedMessage");
   let unifiedUser=null, unifiedProfile=null;
+  document.getElementById("showCustomerRegister").addEventListener("click",()=>{
+    document.getElementById("customerPanel").hidden=false;
+    crf.hidden=false;
+    clf.hidden=true;
+    ca.hidden=true;
+    document.getElementById("customerPanel").scrollIntoView({behavior:"smooth",block:"start"});
+    cm.textContent="नया Customer Account बनाने के लिए नीचे नाम, मोबाइल, Gmail और Password भरें।";
+  });
   unifiedForm.addEventListener("submit",async ev=>{
     ev.preventDefault(); unifiedMessage.textContent="Login हो रहा है...";
     try {
