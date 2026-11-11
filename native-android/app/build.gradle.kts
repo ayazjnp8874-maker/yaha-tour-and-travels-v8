@@ -3,6 +3,11 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val releaseStoreFile = System.getenv("YAHA_KEYSTORE_FILE")
+val releaseStorePassword = System.getenv("YAHA_KEYSTORE_PASSWORD")
+val releaseKeyAlias = System.getenv("YAHA_KEY_ALIAS")
+val releaseKeyPassword = System.getenv("YAHA_KEY_PASSWORD")
+
 android {
     namespace = "com.yahatravels.app"
     compileSdk = 35
@@ -20,11 +25,25 @@ android {
             enableV1Signing = true
             enableV2Signing = true
         }
+        create("release") {
+            if (!releaseStoreFile.isNullOrBlank()) {
+                storeFile = file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+            enableV1Signing = true
+            enableV2Signing = true
+        }
     }
 
     buildTypes {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")
+        }
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
         }
     }
 
