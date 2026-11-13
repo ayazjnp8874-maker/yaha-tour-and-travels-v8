@@ -1,0 +1,6 @@
+name = "yaha-whatsapp-notifications"
+main = "worker.js"
+compatibility_date = "2026-11-13"
+
+[triggers]
+crons = ["*/5 * * * *"]
