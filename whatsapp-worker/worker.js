@@ -92,13 +92,24 @@ function fsString(value) {
 async function listBookings(env, token) {
   const url = "https://firestore.googleapis.com/v1/projects/" +
     encodeURIComponent(env.FIREBASE_PROJECT_ID) +
-    "/databases/(default)/documents/bookings_v8?pageSize=100";
+    "/databases/(default)/documents:runQuery";
   const response = await fetch(url, {
-    headers: { authorization: "Bearer " + token }
+    method: "POST",
+    headers: {
+      authorization: "Bearer " + token,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: "bookings_v8" }],
+        orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }],
+        limit: 5
+      }
+    })
   });
   const data = await response.json();
-  if (!response.ok) throw new Error("Firestore list error: " + JSON.stringify(data));
-  return data.documents || [];
+  if (!response.ok) throw new Error("Firestore query error: " + JSON.stringify(data));
+  return (data || []).map(row => row.document).filter(Boolean);
 }
 
 async function readUser(env, token, uid) {
@@ -132,7 +143,10 @@ async function patchBooking(env, token, docName, fields) {
 }
 
 function phoneDigits(value) {
-  return String(value || "").replace(/\D/g, "");
+  let digits = String(value || "").replace(/\\D/g, "");
+  if (digits.length === 10) digits = "91" + digits;
+  if (digits.length === 11 && digits.startsWith("0")) digits = "91" + digits.slice(1);
+  return digits;
 }
 
 async function sendTemplate(env, to, values) {
