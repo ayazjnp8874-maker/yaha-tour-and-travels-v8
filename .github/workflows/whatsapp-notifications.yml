@@ -1,0 +1,38 @@
+name: YAHA WhatsApp Notifications
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yaha-whatsapp-notifications
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Send eligible WhatsApp notifications
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          FIREBASE_PROJECT_ID: yaha-tour-and-travels
+          META_PHONE_NUMBER_ID: ${{ secrets.META_PHONE_NUMBER_ID }}
+          META_TEMPLATE_NAME: ${{ secrets.META_TEMPLATE_NAME }}
+          META_TEMPLATE_LANGUAGE: ${{ secrets.META_TEMPLATE_LANGUAGE }}
+          ADMIN_PHONE_1: ${{ secrets.ADMIN_PHONE_1 }}
+          ADMIN_PHONE_2: ${{ secrets.ADMIN_PHONE_2 }}
+        run: node whatsapp-worker/notify-github.js
