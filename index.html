@@ -387,7 +387,7 @@
       const start = await geocode(pickupText + ", Jaunpur, Uttar Pradesh, India");
       // Badlapur is ambiguous across India. For this business's local Jaunpur test route,
       // explicitly resolve the Jaunpur, Uttar Pradesh location instead of Maharashtra.
-      const destinationQuery = /\\bbadlapur\\b/i.test(destinationText)
+      const destinationQuery = /\bbadlapur\b/i.test(destinationText)
         ? destinationText + ", Jaunpur, Uttar Pradesh, India"
         : destinationText + ", India";
       const end = await geocode(destinationQuery);
@@ -811,37 +811,49 @@
         const paymentBox = document.createElement("div");
         paymentBox.style.cssText = "margin:10px 0;padding:10px;background:#eef8ee;border:1px solid #b7d8b7;border-radius:8px;";
         const paymentInfo = document.createElement("p");
-        paymentInfo.textContent = "Payment: " + (b.paymentStatus === "paid" ? "PAID / प्राप्त" : "UNPAID / बाकी") +
-          " | देय रकम: ₹" + Number(b.paymentAmountDue || 0).toLocaleString("en-IN") +
-          (b.paymentAmountReceived != null ? " | प्राप्त: ₹" + Number(b.paymentAmountReceived).toLocaleString("en-IN") : "");
+        const totalFare = Number(b.adminFareAmount || b.estimatedFareAmount || 0);
+        const alreadyReceived = Number(b.paymentAmountReceived || 0);
+        const balance = totalFare > 0 ? Math.max(0, totalFare - alreadyReceived) : Number(b.paymentAmountDue || 0);
+        const paymentLabel = b.paymentStatus === "paid" ? "PAID / पूरा प्राप्त" :
+          (alreadyReceived > 0 ? "PARTIAL / आंशिक प्राप्त" : "UNPAID / बाकी");
+        paymentInfo.textContent = "Payment: " + paymentLabel +
+          " | कुल किराया: ₹" + (totalFare || Number(b.paymentAmountDue || 0)).toLocaleString("en-IN") +
+          " | बाकी: ₹" + balance.toLocaleString("en-IN") +
+          " | प्राप्त: ₹" + alreadyReceived.toLocaleString("en-IN");
         paymentBox.appendChild(paymentInfo);
         if (b.paymentStatus !== "paid") {
           const receivedLabel = document.createElement("label");
-          receivedLabel.textContent = "वास्तव में प्राप्त रकम (₹)";
+          receivedLabel.textContent = "अब तक कुल प्राप्त रकम (₹) / Total received so far";
           receivedLabel.style.display = "block";
           const receivedInput = document.createElement("input");
           receivedInput.type = "number"; receivedInput.min = "1"; receivedInput.step = "1";
-          receivedInput.placeholder = "प्राप्त रकम लिखें";
-          receivedInput.value = Number(b.paymentAmountDue || 0) || "";
+          receivedInput.placeholder = "अब तक वास्तव में मिली कुल रकम लिखें";
+          receivedInput.value = alreadyReceived + (Number(b.paymentAmountDue || 0) || 0);
           receivedInput.style.cssText = "width:100%;padding:10px;margin:6px 0;";
           const confirmPayment = document.createElement("button");
           confirmPayment.type = "button";
           confirmPayment.textContent = "Payment Received / भुगतान Confirm करें";
           confirmPayment.addEventListener("click", async () => {
             const received = Math.round(Number(receivedInput.value));
-            if (!Number.isSafeInteger(received) || received < 1) { alert("वास्तव में मिली सही रकम भरें।"); return; }
-            if (!confirm("क्या ₹" + received.toLocaleString("en-IN") + " वास्तव में प्राप्त हो चुके हैं?")) return;
+            if (!Number.isSafeInteger(received) || received < 1 || received < alreadyReceived) {
+              alert("अब तक वास्तव में मिली कुल रकम सही भरें। पहले दर्ज रकम से कम नहीं हो सकती।"); return;
+            }
+            if (totalFare > 0 && received > totalFare) {
+              alert("प्राप्त रकम कुल तय किराये से अधिक नहीं हो सकती।"); return;
+            }
+            if (!confirm("क्या अब तक कुल ₹" + received.toLocaleString("en-IN") + " वास्तव में प्राप्त हो चुके हैं?")) return;
             confirmPayment.disabled = true;
             try {
               const currentAdmin = firebase.auth().currentUser;
               if (!currentAdmin) throw new Error("Admin login नहीं मिला।");
+              const isFullyPaid = totalFare > 0 && received >= totalFare;
               await doc.ref.update({
-                paymentStatus: "paid",
+                paymentStatus: isFullyPaid ? "paid" : "partial",
                 paymentAmountReceived: received,
                 paymentConfirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 paymentConfirmedBy: currentAdmin.email || currentAdmin.uid
               });
-              adminMessage.textContent = "भुगतान प्राप्ति Confirm हो गई।";
+              adminMessage.textContent = isFullyPaid ? "पूरा भुगतान Confirm हो गया।" : "आंशिक भुगतान दर्ज हो गया; बाकी रकम अभी बाकी है।";
               await loadAdminBookings();
             } catch (err) {
               adminMessage.textContent = "Payment confirm नहीं हुआ: " + err.message;
@@ -851,7 +863,7 @@
           paymentBox.append(receivedLabel, receivedInput, confirmPayment);
         } else {
           const paidNote = document.createElement("strong");
-          paidNote.textContent = "✓ Admin ने भुगतान प्राप्ति Confirm की है।";
+          paidNote.textContent = "✓ पूरा भुगतान प्राप्त होने की पुष्टि है।";
           paymentBox.appendChild(paidNote);
         }
         card.appendChild(paymentBox);
