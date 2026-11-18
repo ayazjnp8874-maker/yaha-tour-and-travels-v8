@@ -611,10 +611,14 @@
             } catch(err) { result.textContent = "मंजूरी नहीं हुई: " + err.message; accept.disabled = false; }
           });
           item.append(quote,accept,result);
-        if (b.paymentStatus === "paid") {
+        if (b.paymentStatus === "paid" || b.paymentStatus === "partial") {
           const paymentNote = document.createElement("p");
-          paymentNote.textContent = "✓ भुगतान प्राप्त और Admin द्वारा Confirm: ₹" + Number(b.paymentAmountReceived || b.paymentAmountDue || 0).toLocaleString("en-IN");
-          paymentNote.style.cssText = "color:#16803c;font-weight:700;";
+          const received = Number(b.paymentAmountReceived || 0);
+          const total = Number(b.adminFareAmount || b.estimatedFareAmount || 0);
+          paymentNote.textContent = b.paymentStatus === "paid"
+            ? "✓ पूरा भुगतान प्राप्त और Admin द्वारा Confirm: ₹" + received.toLocaleString("en-IN")
+            : "आंशिक भुगतान Confirm: ₹" + received.toLocaleString("en-IN") + (total > 0 ? " | बाकी: ₹" + Math.max(0, total - received).toLocaleString("en-IN") : " | शेष किराया Admin से जाँचें");
+          paymentNote.style.cssText = "font-weight:700;color:" + (b.paymentStatus === "paid" ? "#16803c" : "#9a6700") + ";";
           item.appendChild(paymentNote);
         } else {
           const paymentNote = document.createElement("p");
@@ -811,7 +815,8 @@
         const paymentBox = document.createElement("div");
         paymentBox.style.cssText = "margin:10px 0;padding:10px;background:#eef8ee;border:1px solid #b7d8b7;border-radius:8px;";
         const paymentInfo = document.createElement("p");
-        const totalFare = Number(b.adminFareAmount || b.estimatedFareAmount || 0);
+        const fareTextAmount = Number((String(b.estimatedFare || "").match(/[0-9][0-9,]*/ ) || ["0"])[0].replace(/,/g, ""));
+        const totalFare = Number(b.adminFareAmount || b.estimatedFareAmount || fareTextAmount || 0);
         const alreadyReceived = Number(b.paymentAmountReceived || 0);
         const balance = totalFare > 0 ? Math.max(0, totalFare - alreadyReceived) : Number(b.paymentAmountDue || 0);
         const paymentLabel = b.paymentStatus === "paid" ? "PAID / पूरा प्राप्त" :
