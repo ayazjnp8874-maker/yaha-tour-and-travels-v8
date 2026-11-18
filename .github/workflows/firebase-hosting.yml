@@ -8,10 +8,16 @@ on:
       - "index.html"
       - "privacy.html"
       - "terms.html"
+      - "robots.txt"
+      - "sitemap.xml"
       - "firebase.json"
       - ".firebaserc"
       - ".github/workflows/firebase-hosting.yml"
   workflow_dispatch:
+
+concurrency:
+  group: firebase-hosting-production
+  cancel-in-progress: true
 
 permissions:
   contents: read
