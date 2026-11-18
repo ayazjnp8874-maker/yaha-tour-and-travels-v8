@@ -1,16 +1,35 @@
-name: YAHA V8 Check
+name: Deploy YAHA Travels to Firebase Hosting
 
 on:
   push:
     branches:
       - main
+    paths:
+      - "index.html"
+      - "privacy.html"
+      - "terms.html"
+      - "firebase.json"
+      - ".firebaserc"
+      - ".github/workflows/firebase-hosting.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  check:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Verify workflow
-        run: echo "YAHA TOUR AND TRAVELS V8 workflow is working"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Deploy website to Firebase Hosting
+        run: firebase deploy --only hosting --project yaha-tour-and-travels --non-interactive
