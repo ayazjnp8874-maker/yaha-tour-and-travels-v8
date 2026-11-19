@@ -181,6 +181,8 @@
       <h3>Bookings Dashboard</h3>
       <p id="adminWelcome"></p>
       <button type="button" id="refreshBookings">Refresh Bookings</button>
+      <button type="button" id="enableBookingNotifications">नई Booking की Notification चालू करें</button>
+      <p id="bookingNotificationStatus" class="note" aria-live="polite">Dashboard खुला रहने पर नई booking अपने-आप दिखाई देगी।</p>
       <div id="adminBookings" aria-live="polite"></div>
       <hr><h3>Vehicle Management</h3>
       <form id="vehicleForm">
@@ -729,6 +731,55 @@
   const adminDashboard = document.getElementById("adminDashboard");
   const adminMessage = document.getElementById("adminMessage");
   const adminBookings = document.getElementById("adminBookings");
+  let adminBookingUnsubscribe = null;
+  let bookingListenerInitialized = false;
+
+  function startAdminBookingRealtime() {
+    if (!bookingsDb || !firebase.auth().currentUser) return;
+    if (adminBookingUnsubscribe) adminBookingUnsubscribe();
+    bookingListenerInitialized = false;
+    const status = document.getElementById("bookingNotificationStatus");
+    adminBookingUnsubscribe = bookingsDb.collection("bookings_v8")
+      .orderBy("createdAt", "desc").limit(100)
+      .onSnapshot((snapshot) => {
+        if (!bookingListenerInitialized) {
+          bookingListenerInitialized = true;
+          status.textContent = "✓ Live booking update चालू है। नई booking आते ही Dashboard अपने-आप refresh होगा।";
+          return;
+        }
+        const added = snapshot.docChanges().filter(change => change.type === "added");
+        if (added.length) {
+          loadAdminBookings();
+          added.forEach(change => {
+            const b = change.doc.data();
+            const title = "YAHA Travels: नई Booking";
+            const body = (b.name || "Customer") + " | " + (b.vehicle || "") + " | " + (b.pickup || "") + " → " + (b.destination || "");
+            if ("Notification" in window && Notification.permission === "granted") {
+              try { new Notification(title, { body, tag: "yaha-booking-" + change.doc.id }); } catch (e) {}
+            }
+            status.textContent = "🔔 नई booking मिली: " + (b.bookingId || change.doc.id) + " — Dashboard update हो गया।";
+          });
+        }
+      }, (error) => {
+        status.textContent = "Live update चालू नहीं हुआ: " + error.message + " — Refresh Bookings दबाएँ।";
+      });
+  }
+
+  document.getElementById("enableBookingNotifications").addEventListener("click", async () => {
+    const status = document.getElementById("bookingNotificationStatus");
+    if (!("Notification" in window)) {
+      status.textContent = "इस Browser में Notification support उपलब्ध नहीं है। Dashboard का live update चालू रहेगा।";
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      status.textContent = permission === "granted"
+        ? "✓ Browser notification अनुमति मिल गई। नई booking पर alert आएगा (Dashboard खुला होना चाहिए)।"
+        : "Notification अनुमति नहीं मिली। Dashboard में live booking update फिर भी रहेगा।";
+    } catch (error) {
+      status.textContent = "Notification अनुमति नहीं मिल सकी। Dashboard live update उपलब्ध रहेगा।";
+    }
+  });
 
   async function loadAdminBookings() {
     if (!bookingsDb || !firebase.auth().currentUser) {
@@ -1017,6 +1068,7 @@
       adminMessage.textContent = "Admin login successful.";
       await loadAdminBookings();
       await loadAdminResources();
+      startAdminBookingRealtime();
     } catch (err) {
       adminMessage.textContent = "Login failed: " + err.message;
     }
@@ -1024,6 +1076,7 @@
 
   document.getElementById("refreshBookings").addEventListener("click", loadAdminBookings);
   document.getElementById("adminLogout").addEventListener("click", async () => {
+    if (adminBookingUnsubscribe) { adminBookingUnsubscribe(); adminBookingUnsubscribe = null; }
     await firebase.auth().signOut();
     adminDashboard.hidden = true;
     adminLoginForm.hidden = false;
@@ -1290,6 +1343,7 @@
             try {
               await loadAdminBookings();
               await loadAdminResources();
+              startAdminBookingRealtime();
               unifiedMessage.textContent="Admin Dashboard खुल गया।";
             } catch(err) {
               console.error("Admin dashboard open error:",err);
@@ -1308,6 +1362,7 @@
     } catch(err){ if(firebase.auth().currentUser) await firebase.auth().signOut(); unifiedMessage.textContent="Login failed: "+err.message; }
   });
   document.getElementById("unifiedLogout").addEventListener("click",async()=>{
+    if (adminBookingUnsubscribe) { adminBookingUnsubscribe(); adminBookingUnsubscribe = null; }
     await firebase.auth().signOut(); unifiedUser=null; unifiedProfile=null;
     unifiedRoles.hidden=true; unifiedForm.hidden=false; unifiedMessage.textContent="Logout हो गया।";
     document.getElementById("customerPanel").hidden=true;
