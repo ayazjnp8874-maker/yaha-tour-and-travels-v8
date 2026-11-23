@@ -613,6 +613,9 @@
             } catch(err) { result.textContent = "मंजूरी नहीं हुई: " + err.message; accept.disabled = false; }
           });
           item.append(quote,accept,result);
+        }
+
+        // Payment status must be visible for every booking, not only fixed-fare quotes.
         if (b.paymentStatus === "paid" || b.paymentStatus === "partial") {
           const paymentNote = document.createElement("p");
           const received = Number(b.paymentAmountReceived || 0);
@@ -627,7 +630,8 @@
           paymentNote.textContent = "भुगतान स्थिति: अभी भुगतान Confirm नहीं हुआ है।";
           item.appendChild(paymentNote);
         }
-        } else if (b.fareType === "fixed" && b.fareQuoteStatus === "requested") {
+
+        if (b.fareType === "fixed" && b.fareQuoteStatus === "requested") {
           const pending = document.createElement("p"); pending.textContent = "किराया तय होकर आने तक Booking Confirm नहीं है।"; item.appendChild(pending);
         } else if (b.fareType === "fixed" && b.fareQuoteStatus === "accepted") {
           const accepted = document.createElement("p"); accepted.textContent = "आपने ₹" + Number(b.adminFareAmount || 0).toLocaleString("en-IN") + " किराया मंजूर कर दिया है।"; item.appendChild(accepted);
@@ -803,7 +807,10 @@
       const completedRevenue = allBookings
         .filter(b => b.status === "completed")
         .reduce((sum, b) => {
-          const amount = Number(String(b.estimatedFare || "").replace(/[^0-9.]/g, ""));
+          // Fixed-fare trips use the Admin-approved total; per-KM trips use
+          // the stored numeric fare when present, then the displayed estimate.
+          const displayedAmount = Number(String(b.estimatedFare || "").replace(/[^0-9.]/g, ""));
+          const amount = Number(b.adminFareAmount || b.estimatedFareAmount || displayedAmount || 0);
           return sum + (Number.isFinite(amount) ? amount : 0);
         }, 0);
       const reportTitle = document.createElement("strong");
