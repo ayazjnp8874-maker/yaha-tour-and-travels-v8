@@ -15,10 +15,12 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
     }
     match /users/{uid} {
-      // Customers may create only their own customer profile.
+      // Customers may create only their own customer profile and cannot self-assign privileged roles.
       // Admins may create driver profiles using the driver's Firebase Auth UID.
       allow create: if (signedIn() && request.auth.uid == uid
           && request.resource.data.role == 'customer'
+          && request.resource.data.roles is list
+          && request.resource.data.roles.hasOnly(['customer'])
           && request.resource.data.active == true)
         || (isAdmin() && request.resource.data.role == 'driver'
           && request.resource.data.active == true);
