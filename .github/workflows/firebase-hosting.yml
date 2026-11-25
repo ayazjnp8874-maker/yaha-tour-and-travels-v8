@@ -12,6 +12,7 @@ on:
       - "robots.txt"
       - "sitemap.xml"
       - "firebase.json"
+      - "firestore.rules"
       - ".firebaserc"
       - ".github/workflows/firebase-hosting.yml"
   workflow_dispatch:
@@ -38,5 +39,5 @@ jobs:
       - name: Install Firebase CLI
         run: npm install --global firebase-tools
 
-      - name: Deploy website to Firebase Hosting
-        run: firebase deploy --only hosting --project yaha-tour-and-travels --non-interactive
+      - name: Deploy website and Firestore security rules
+        run: firebase deploy --only hosting,firestore:rules --project yaha-tour-and-travels --non-interactive
