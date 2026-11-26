@@ -47,10 +47,17 @@ service cloud.firestore {
         && request.resource.data.fareType in ['per_km','fixed']
         && request.resource.data.fareTypeLabel is string
         && request.resource.data.estimatedFare is string
-        && request.resource.data.estimatedFareAmount == null
+        && ((request.resource.data.fareType == 'fixed' && request.resource.data.estimatedFareAmount == null && request.resource.data.paymentAmountDue == null)
+          || (request.resource.data.fareType == 'per_km'
+            && request.resource.data.vehicle in ['Ertiga', 'Dzire']
+            && request.resource.data.distanceKm is number
+            && request.resource.data.distanceKm > 0
+            && request.resource.data.estimatedFareAmount is number
+            && request.resource.data.estimatedFareAmount == request.resource.data.distanceKm * (request.resource.data.vehicle == 'Ertiga' ? 14 : 12)
+            && request.resource.data.paymentAmountDue is number
+            && request.resource.data.paymentAmountDue == (request.resource.data.paymentOption == 'advance' ? request.resource.data.estimatedFareAmount / 2 : request.resource.data.estimatedFareAmount)))
         && request.resource.data.paymentOption in ['full','advance']
         && request.resource.data.paymentOptionLabel is string
-        && request.resource.data.paymentAmountDue == null
         && request.resource.data.paymentStatus == 'unpaid'
         && request.resource.data.paymentUpiId is string
         && request.resource.data.createdAt is timestamp
