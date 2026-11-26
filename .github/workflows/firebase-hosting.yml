@@ -6,6 +6,10 @@ on:
       - main
     paths:
       - "index.html"
+      - "css/**"
+      - "sw.js"
+      - "icon.svg"
+      - "icon-512.png"
       - "privacy.html"
       - "terms.html"
       - "manifest.json"
