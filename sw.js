@@ -1,5 +1,5 @@
 const CACHE_NAME = "yaha-travels-v4";
-const APP_FILES = ["./", "./index.html", "./manifest.json", "./icon.svg"];
+const APP_FILES = ["./", "./index.html", "./css/style.css", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -22,7 +22,7 @@ self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Always check the latest HTML from GitHub Pages first.
+  // Always check the latest HTML from the hosting origin first.
   if (event.request.mode === "navigate" || url.pathname.endsWith(".html") || url.pathname.endsWith("/")) {
     event.respondWith(
       fetch(event.request).then(response => {
