@@ -23,7 +23,7 @@ Admin access is intentionally not available through public self-registration. Cr
 4. Save the document.
 
 ## 4. Sign in
-Open the published app: https://ayazjnp8874-maker.github.io/yaha-tour-and-travels-v8/
+Open the published app: https://yaha-tour-and-travels.web.app/
 Choose Admin Login and use the exact email/password created in Authentication.
 
 ## Important security notes
