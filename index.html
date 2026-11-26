@@ -593,6 +593,15 @@
         h.textContent = (b.bookingId || doc.id) + " — " + (b.status || "new");
         p.textContent = (b.vehicle || "") + " | " + (b.pickup || "") + " से " + (b.destination || "") + " | " + formatTravelDateTime(b.travelDate, b.travelTime);
         item.append(h,p);
+        if (b.fareType === "per_km" && Number(b.estimatedFareAmount) > 0) {
+          const kmFare = document.createElement("p");
+          kmFare.textContent = "अनुमानित कुल किराया: ₹" + Number(b.estimatedFareAmount).toLocaleString("en-IN") +
+            " | " + (b.paymentOption === "advance" ? "50% एडवांस देय: ₹" : "पूरा भुगतान देय: ₹") +
+            Number(b.paymentAmountDue || b.estimatedFareAmount).toLocaleString("en-IN") +
+            " — यह दूरी के आधार पर अनुमान है; अंतिम किराया यात्रा की वास्तविक दूरी के अनुसार होगा।";
+          kmFare.style.cssText = "font-weight:700;background:#fff4c2;padding:10px;border-radius:6px;";
+          item.appendChild(kmFare);
+        }
         if (b.fareType === "fixed" && b.fareQuoteStatus === "offered" && b.customerUid === user.uid && !["completed", "cancelled"].includes(b.status)) {
           const quote = document.createElement("p");
           const quotedTotal = Number(b.adminFareAmount || 0);
