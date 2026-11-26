@@ -891,7 +891,7 @@
           const receivedInput = document.createElement("input");
           receivedInput.type = "number"; receivedInput.min = "1"; receivedInput.step = "1";
           receivedInput.placeholder = "अब तक वास्तव में मिली कुल रकम लिखें";
-          receivedInput.value = alreadyReceived + (Number(b.paymentAmountDue || 0) || 0);
+          receivedInput.value = alreadyReceived > 0 ? alreadyReceived : "";
           receivedInput.style.cssText = "width:100%;padding:10px;margin:6px 0;";
           const confirmPayment = document.createElement("button");
           confirmPayment.type = "button";
