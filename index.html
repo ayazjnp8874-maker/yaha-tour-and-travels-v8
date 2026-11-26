@@ -491,7 +491,9 @@
     const estimate = fareType === "per_km"
       ? "₹" + estimatedKmFare.toLocaleString("en-IN") + " (लगभग; " + distance + " KM × ₹" + rate + "/KM)"
       : "फिक्स किराया चुना गया; कुल रकम Admin तय करेगा";
-    const paymentAmount = null;
+    const paymentAmount = fareType === "per_km"
+      ? (paymentOption === "advance" ? Math.ceil(estimatedKmFare * 0.50) : estimatedKmFare)
+      : null;
     const paymentLabel = paymentOption === "advance" ? "50% Advance (किराया तय होने के बाद)" : "Full Payment (किराया तय होने के बाद)";
 
     const bookingId = "YTT-" + Date.now();
@@ -535,7 +537,7 @@
           fareTypeLabel: fareTypeLabel,
           extraDetails: extra,
           estimatedFare: estimate,
-          estimatedFareAmount: null, // Firestore rules require null until Admin confirms final fare.
+          estimatedFareAmount: estimatedKmFare, // Per-KM fare is a rate-based estimate; fixed fare remains null until Admin quotes.
           paymentOption: paymentOption,
           paymentOptionLabel: paymentLabel,
           paymentAmountDue: paymentAmount,
