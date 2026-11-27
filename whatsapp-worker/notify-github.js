@@ -239,7 +239,33 @@ async function processBooking(env, googleToken, doc) {
   }
 }
 
+function validateEnvironment(env) {
+  const required = [
+    "GOOGLE_SERVICE_ACCOUNT_JSON",
+    "META_ACCESS_TOKEN",
+    "FIREBASE_PROJECT_ID",
+    "META_PHONE_NUMBER_ID",
+    "META_TEMPLATE_NAME"
+  ];
+  const missing = required.filter(name => !String(env[name] || "").trim());
+  if (!String(env.ADMIN_PHONE_1 || "").trim() && !String(env.ADMIN_PHONE_2 || "").trim()) {
+    missing.push("ADMIN_PHONE_1 or ADMIN_PHONE_2 (at least one)");
+  }
+  if (missing.length) {
+    throw new Error("WhatsApp notifications are not configured. Missing: " + missing.join(", "));
+  }
+  try {
+    const serviceAccount = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_JSON);
+    if (!serviceAccount.client_email || !serviceAccount.private_key) {
+      throw new Error("missing client_email or private_key");
+    }
+  } catch (error) {
+    throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is invalid: " + String(error.message || error));
+  }
+}
+
 async function main(env) {
+    validateEnvironment(env);
     const googleToken = await googleAccessToken(env);
     const docs = await listBookings(env, googleToken);
     const results = [];
